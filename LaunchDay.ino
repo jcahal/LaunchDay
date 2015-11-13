@@ -1,3 +1,5 @@
+#include <Adafruit_Sensor.h>
+
 /****************************************************
  * Phoenix College Acsend Launch Day Logic Fall 2015
  * 
@@ -15,18 +17,18 @@
 #include <Wire.h>              //IMU, Luminosity, Borometer, RGB
 
 #include <Adafruit_Sensor.h>   //IMU
-#include <Adafruit_LSM303_U.h> //IMU
-#include <Adafruit_BMP085_U.h> //IMU
-#include <Adafruit_L3GD20_U.h> //IMU
+#include <Adafruit_LSM303_U.h>   //IMU
+#include <Adafruit_BMP085_U.h>   //IMU
+#include <Adafruit_L3GD20_U.h>   //IMU
 #include <Adafruit_10DOF.h>    //IMU
 
 #include <SparkFunTSL2561.h>   //Luminosity
 
 #include <SFE_BMP180.h>        //Barometer
 
-#include <SFE_ISL29125.h>      //RGB
+#include <SparkFunISL29125.h>      //RGB
 
-
+/*
 //IMU Definitions
 /////////////////////////////////////////////////////////
 //Assign a unique ID to the sensors
@@ -35,12 +37,6 @@ Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       B   = Adafruit_BMP085_Unified(18001);
 Adafruit_L3GD20_Unified       G   = Adafruit_L3GD20_Unified(20);
 
-//Luminosty Definitions
-/////////////////////////////////////////////////////////
-
-SFE_TSL2561 light; // Create an SFE_TSL2561 object, here called "light":
-boolean gain;     // Gain setting, 0 = X1, 1 = X16;
-unsigned int ms;  // Integration ("shutter") time in milliseconds
 
 //UV Definitions
 /////////////////////////////////////////////////////////
@@ -49,11 +45,22 @@ int UVOUT = A0; //Output from the sensor
 int REF_3V3 = A1; //3.3V power on the Arduino board
 
 
+//RGB Definitions
+/////////////////////////////////////////////////////////
+SFE_ISL29125 RGB_sensor; // Declare sensor object
+*/
+
+//Luminosty Definitions
+/////////////////////////////////////////////////////////
+SFE_TSL2561 light; // Create an SFE_TSL2561 object, here called "light":
+boolean gain;     // Gain setting, 0 = X1, 1 = X16;
+unsigned int ms;  // Integration ("shutter") time in milliseconds
+
+
 //Barometer Definitions
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
 #define ALTITUDE 1655.0 // Altitude of SparkFun's HQ in Boulder, CO. in meters
-
 
 
 //Phoenix College Acsend Team variables
@@ -65,7 +72,10 @@ int t = 0;     //time keeper (seconds)
 //Funcions Prototypes
 /////////////////////////////////////////////////////////
 
-//printError(byte error) - Used by the Luminosity sensor to display errors
+// int averageAnalogRead(int pinToRead) - Takes an average of readings on a given pin. Returns the average
+int averageAnalogRead(int pinToRead);
+
+//void printError(byte error) - Used by the Luminosity sensor to display errors
 void printError(byte error);
 
 
@@ -74,9 +84,10 @@ void printError(byte error);
 void setup(void){
   Serial.begin(9600);
 
+/*
   //IMU SETUP
   //////////////////////////////////////////////////////
-  /* Initialise the sensors & check connections*/
+  //Initialise the sensors & check connections
   if(!A.begin()){
     Serial.println(F("No LSM303 detected."));
     while(1);
@@ -100,9 +111,22 @@ void setup(void){
   A.getSensor(&sensor);
   G.getSensor(&sensor);
   M.getSensor(&sensor);
-  B.getSensor(&sensor);
-  
+  B.getSensor(&sensor);  
 
+  //UV SETUP
+  //////////////////////////////////////////////////////
+  pinMode(UVOUT, INPUT);
+  pinMode(REF_3V3, INPUT);
+
+
+  //RGB SETUP
+  //////////////////////////////////////////////////////
+  // Initialize the ISL29125 with simple configuration so it starts sampling
+  if (RGB_sensor.init())
+  {
+
+  }
+*/
   //LUMINOSITY SETUP
   //////////////////////////////////////////////////////
   light.begin();
@@ -121,11 +145,7 @@ void setup(void){
 
   light.setTiming(gain,time,ms);
   light.setPowerUp();
-
-  //UV SETUP
-  //////////////////////////////////////////////////////
-  pinMode(UVOUT, INPUT);
-  pinMode(REF_3V3, INPUT);
+  
 
   //BAROMETER SETUP
   /////////////////////////////////////////////////////////
@@ -142,16 +162,12 @@ void setup(void){
   }
   
 
-  //RGB SETUP
-  //////////////////////////////////////////////////////
-  
-
   //GPS SETUP
   //////////////////////////////////////////////////////
  
 
   //Output Header
-  Serial.println(F("Ax, Ay, Az, Mx, My, Mz, Gx, Gy, Gz, Bp, Bt, Ba"));
+  Serial.println(F("Ax, Ay, Az, Mx, My, Mz, Gx, Gy, Gz, Bp, Bt, UVl, UVi, R, G, B, Vl, Il, LUX, T, P, Alt"));
   delay(500);
   
 }
@@ -165,16 +181,19 @@ void loop() {
 
   //Launch Day State Machine
   switch(state) {
-    case: 0      //State 00, Waiting State  
-      
+    case 0:      //State 00, Waiting State 
+
+     state = 1;
+
+/*
       if(t >= 120) { state++; } //transision to next state
       delay(1000); //delay 1s
       t++; //keep time
-      
+*/    
       break;
 
-    case: 1      //State 01, Data Collection State
-
+    case 1:      //State 01, Data Collection State
+/*
         //IMU OPERATIONS
         //////////////////////////////////////////////////////
         //Get a new sensor event
@@ -208,8 +227,35 @@ void loop() {
           Serial.print(B_event.pressure);       Serial.print(F(","));
           B.getTemperature(&temperature);
           Serial.print(temperature);            Serial.print(F(","));
+
         
+        //UV OPERATIONS
+        //////////////////////////////////////////////////////
+        int uvLevel = averageAnalogRead(UVOUT);
+        int refLevel = averageAnalogRead(REF_3V3);
         
+        //Use the 3.3V power pin as a reference to get a very accurate output value from sensor
+        float outputVoltage = 3.3 / refLevel * uvLevel;
+        
+        float uvIntensity = mapfloat(outputVoltage, 0.99, 2.8, 0.0, 15.0); //Convert the voltage to a UV intensity level
+        
+        Serial.print(uvLevel);                  Serial.print(F(","));
+        Serial.print(uvIntensity);              Serial.print(F(","));
+
+
+        //RGB OPERATIONS
+        //////////////////////////////////////////////////////
+        // Read sensor values (16 bit integers)
+        unsigned int red = RGB_sensor.readRed();
+        unsigned int green = RGB_sensor.readGreen();
+        unsigned int blue = RGB_sensor.readBlue();
+        
+        // Print out readings, change HEX to DEC if you prefer decimal output
+        Serial.print(red,DEC);                  Serial.print(F(","));
+        Serial.print(green,DEC);                Serial.print(F(","));
+        Serial.print(blue,DEC);                 Serial.print(F(","));
+*/        
+      
         //LUMINOSITY OPERATIONS
         //////////////////////////////////////////////////////
         //Once integration is complete, we'll retrieve the data.
@@ -240,10 +286,6 @@ void loop() {
           printError(error);
         }
         
-        
-        //UV OPERATIONS
-        //////////////////////////////////////////////////////
-
 
         //BAROMETER OPERATIONS
         /////////////////////////////////////////////////////////
@@ -312,17 +354,13 @@ void loop() {
         Serial.print(T,2);                      Serial.print(F(","));
         Serial.print(P,2);                      Serial.print(F(","));
         Serial.print(p0,2);                     Serial.print(F(","));
-
-      
-        //RGB OPERATIONS
-        //////////////////////////////////////////////////////
-        
+              
       
         //GPS OPERATIONS
         //////////////////////////////////////////////////////
         
 
-        Serial.println(F("")) //print new line
+        Serial.println(F("")); //print new line
       break;
   }
   
@@ -334,7 +372,30 @@ void loop() {
 //FUNCTION DEFINITIONS
 //////////////////////////////////////////////////////
 
-//printError(byte error) - Used by the Luminosity sensor to display errors
+//int averageAnalogRead(int pinToRead) - Takes an average of readings on a given pin. Returns the average
+//////////////////////////////////////////////////////
+int averageAnalogRead(int pinToRead)
+{
+  byte numberOfReadings = 8;
+  unsigned int runningValue = 0; 
+
+  for(int x = 0 ; x < numberOfReadings ; x++)
+    runningValue += analogRead(pinToRead);
+  runningValue /= numberOfReadings;
+
+  return(runningValue);  
+}
+
+//The Arduino Map function but for floats
+//From: http://forum.arduino.cc/index.php?topic=3922.0
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+
+//void printError(byte error) - Used by the Luminosity sensor to display errors
+//////////////////////////////////////////////////////
 void printError(byte error)
   // If there's an I2C error, this function will
   // print out an explanation.
