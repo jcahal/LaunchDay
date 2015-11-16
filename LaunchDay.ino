@@ -1,15 +1,27 @@
-#include <Adafruit_Sensor.h>
-
 /****************************************************
  * Phoenix College Acsend Launch Day Logic Fall 2015
  *
  * This file contains the code for collecting data from:
+ * 
  * (IMU) - Adafruit 10-DOF IMU Breakout
- * (Luminosity) - SparkFun Luminosity Sensor Breakout - TSL2561
  * (UV) - SparkFun UV Sensor Breakout - ML8511
+ * (RBG) - SparkFun RGB Light Sensor - ISL29125
+ * (Luminosity) - SparkFun Luminosity Sensor Breakout - TSL2561
+ * (Barometer) - SparkFun Barometric Pressure Sensor Breakout - BMP180
  * (GPS) - Adafruit Ultimate GPS Breakout - 66 channel w/10 Hz updates - Version 3
- *
- * Authors:
+ * 
+ * Authors: Phoenix College Acsend Team 2015 - 2016
+ * 
+ * Version 0.3.2
+ * 
+ * TODO's: 
+ *  Change Luminosity Settings to what we want.
+ *  GPS code
+ *  ChronoDot code
+ *  Get sensors to play nice
+ *  Finish header comments
+ *    explain output file
+ * 
  ***************************************************/
 
 /////////////////////////////////////////////////////////
@@ -17,16 +29,16 @@
 #include <Wire.h>          	//IMU, Luminosity, Borometer, RGB
 
 #include <Adafruit_Sensor.h>   //IMU
-#include <Adafruit_LSM303_U.h>   //IMU
-#include <Adafruit_BMP085_U.h>   //IMU
-#include <Adafruit_L3GD20_U.h>   //IMU
-#include <Adafruit_10DOF.h>	//IMU
+#include <Adafruit_LSM303_U.h> //IMU
+#include <Adafruit_BMP085_U.h> //IMU
+#include <Adafruit_L3GD20_U.h> //IMU
+#include <Adafruit_10DOF.h>    //IMU
 
 #include <SparkFunTSL2561.h>   //Luminosity
 
-#include <SFE_BMP180.h>    	//Barometer
+#include <SFE_BMP180.h>    	   //Barometer
 
-#include <SparkFunISL29125.h>  	//RGB
+#include <SparkFunISL29125.h>  //RGB
 
 /*
 //IMU Definitions
@@ -36,12 +48,16 @@ Adafruit_LSM303_Accel_Unified A   = Adafruit_LSM303_Accel_Unified(30301);
 Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified   	B   = Adafruit_BMP085_Unified(18001);
 Adafruit_L3GD20_Unified   	G   = Adafruit_L3GD20_Unified(20);
+
+
 //UV Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions
 int UVOUT = A0; //Output from the sensor
 int REF_3V3 = A1; //3.3V power on the Arduino board
 */
+
+
 //RGB Definitions
 /////////////////////////////////////////////////////////
 SFE_ISL29125 RGB_sensor; // Declare sensor object
@@ -58,6 +74,10 @@ unsigned int ms;  // Integration ("shutter") time in milliseconds
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
 #define ALTITUDE 1655.0 // Altitude of SparkFun's HQ in Boulder, CO. in meters
+
+
+//GPS Definitions
+//////////////////////////////////////////////////////
 
 
 //Phoenix College Acsend Team variables
@@ -122,9 +142,7 @@ void setup(void){
   //LUMINOSITY SETUP
   //////////////////////////////////////////////////////
   light.begin();
-
-  //TODO: Change Settings to what we want
- 
+  
   // If gain = false (0), device is set to low gain (1X)
   // If gain = high (1), device is set to high gain (16X)
   gain = 0;
@@ -176,13 +194,16 @@ void loop() {
   switch(state) {
 	case 0:  	//State 00, Waiting State
 
- 	state = 1;
+ 	  //To setup a 2 min time delay (Untested), comment ou the line below
+    //and uncomment the 3 below that.
+ 	  state = 1;
 
-/*
+    //Uncomment these 3 lines to setup a 2 min time delay (Untested)
+    /*
   	if(t >= 120) { state++; } //transision to next state
   	delay(1000); //delay 1s
   	t++; //keep time
-*/    
+    */    
   	break;
 
 	case 1:  	//State 01, Data Collection State
@@ -234,6 +255,7 @@ void loop() {
     	Serial.print(uvLevel);              	Serial.print(F(","));
     	Serial.print(uvIntensity);          	Serial.print(F(","));
     	*/
+      
     	//RGB OPERATIONS
     	//////////////////////////////////////////////////////
     	// Read sensor values (16 bit integers)
