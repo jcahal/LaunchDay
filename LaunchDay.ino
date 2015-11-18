@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 0.4.2
+ * Version 1.0rc1
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -93,11 +93,12 @@ int state = 0; //for state machine switch statement
 int t = 0; 	//time keeper (seconds)
 
 //LEDs
-int LD0 = 0;
-int LD1 = 1;
-int LD2 = 2;
-int LD3 = 3;
-int LD4 = 4;
+int LD0 = 4; // D2
+int LD1 = 5; // D3
+int LD2 = 6; // D4
+int LD3 = 7; // D5
+
+int heater = 8; // D6
 
 
 //Funcions Prototypes
@@ -207,7 +208,7 @@ void setup(void){
   pinMode(LD1, OUTPUT);
   pinMode(LD2, OUTPUT);
   pinMode(LD3, OUTPUT);
-  pinMode(LD4, OUTPUT);
+  pinMode(heater, OUTPUT);
     
 
   //Output Header
@@ -261,217 +262,225 @@ void loop() {
     	break;
   
   	case 1:  	//State 01, Data Collection State
+
+      LD0 = HIGH; //Light LD0 to indicate start data loging
    
-      	//IMU OPERATIONS
-      	//////////////////////////////////////////////////////
-      	//Get a new sensor event
-      	sensors_event_t A_event;
-      	sensors_event_t M_event;
-      	sensors_event_t G_event;
-      	sensors_event_t B_event;
-     	 
-     	 
-      	float temperature; //Ambient temperature
-   	 
-      	//Retrieve sensor data
-      	A.getEvent(&A_event);
-      	M.getEvent(&M_event);
-      	G.getEvent(&G_event);
-   	 
-      	//Display Sensor Information: Accel, Mag, Gyro
-      	Serial.print(A_event.acceleration.x); Serial.print(F(","));
-      	Serial.print(A_event.acceleration.y); Serial.print(F(","));
-      	Serial.print(A_event.acceleration.z); Serial.print(F(","));
-      	Serial.print(M_event.magnetic.x);   	Serial.print(F(","));
-      	Serial.print(M_event.magnetic.y);   	Serial.print(F(","));
-      	Serial.print(M_event.magnetic.z);   	Serial.print(F(","));
-      	Serial.print(G_event.gyro.x);       	Serial.print(F(","));
-      	Serial.print(G_event.gyro.y);       	Serial.print(F(","));
-      	Serial.print(G_event.gyro.z);       	Serial.print(F(","));
-   	 
-      	//Display Sensor Information: Pressure, Temp, Alt
-      	B.getEvent(&B_event);
-      	if (B_event.pressure){
-        	Serial.print(B_event.pressure);   	Serial.print(F(","));
-        	B.getTemperature(&temperature);
-        	Serial.print(temperature);        	Serial.print(F(","));
-      	}      
-     	 
-      	//UV OPERATIONS
-      	//////////////////////////////////////////////////////
-      	int uvLevel = averageAnalogRead(UVOUT);
-      	int refLevel = averageAnalogRead(REF_3V3);
-     	 
-      	//Use the 3.3V power pin as a reference to get a very accurate output value from sensor
-      	float outputVoltage = 3.3 / refLevel * uvLevel;
-     	 
-      	float uvIntensity = mapfloat(outputVoltage, 0.99, 2.8, 0.0, 15.0); //Convert the voltage to a UV intensity level
-     	 
-      	Serial.print(uvLevel);              	Serial.print(F(","));
-      	Serial.print(uvIntensity);          	Serial.print(F(","));
-       
-        
-      	//RGB OPERATIONS
-      	//////////////////////////////////////////////////////
-      	// Read sensor values (16 bit integers)
-      	unsigned int red = RGB_sensor.readRed();
-      	unsigned int green = RGB_sensor.readGreen();
-      	unsigned int blue = RGB_sensor.readBlue();
-     	 
-      	// Print out readings, change HEX to DEC if you prefer decimal output
-      	Serial.print(red,DEC);              	Serial.print(F(","));
-      	Serial.print(green,DEC);            	Serial.print(F(","));
-      	Serial.print(blue,DEC);             	Serial.print(F(","));
+    	//IMU OPERATIONS
+    	//////////////////////////////////////////////////////
+    	//Get a new sensor event
+    	sensors_event_t A_event;
+    	sensors_event_t M_event;
+    	sensors_event_t G_event;
+    	sensors_event_t B_event;
    	 
    	 
-      	//LUMINOSITY OPERATIONS
-      	//////////////////////////////////////////////////////
-      	//Once integration is complete, we'll retrieve the data.
-   
-      	unsigned int data0, data1;//Retrieve the data from the device:
+    	float temperature; //Ambient temperature
+ 	 
+    	//Retrieve sensor data
+    	A.getEvent(&A_event);
+    	M.getEvent(&M_event);
+    	G.getEvent(&G_event);
+ 	 
+    	//Display Sensor Information: Accel, Mag, Gyro
+    	Serial.print(A_event.acceleration.x); Serial.print(F(","));
+    	Serial.print(A_event.acceleration.y); Serial.print(F(","));
+    	Serial.print(A_event.acceleration.z); Serial.print(F(","));
+    	Serial.print(M_event.magnetic.x);   	Serial.print(F(","));
+    	Serial.print(M_event.magnetic.y);   	Serial.print(F(","));
+    	Serial.print(M_event.magnetic.z);   	Serial.print(F(","));
+    	Serial.print(G_event.gyro.x);       	Serial.print(F(","));
+    	Serial.print(G_event.gyro.y);       	Serial.print(F(","));
+    	Serial.print(G_event.gyro.z);       	Serial.print(F(","));
+ 	 
+    	//Display Sensor Information: Pressure, Temp, Alt
+    	B.getEvent(&B_event);
+    	if (B_event.pressure){
+      	Serial.print(B_event.pressure);   	Serial.print(F(","));
+      	B.getTemperature(&temperature);
+      	Serial.print(temperature);        	Serial.print(F(","));
+    	}      
+   	 
+    	//UV OPERATIONS
+    	//////////////////////////////////////////////////////
+    	int uvLevel = averageAnalogRead(UVOUT);
+    	int refLevel = averageAnalogRead(REF_3V3);
+   	 
+    	//Use the 3.3V power pin as a reference to get a very accurate output value from sensor
+    	float outputVoltage = 3.3 / refLevel * uvLevel;
+   	 
+    	float uvIntensity = mapfloat(outputVoltage, 0.99, 2.8, 0.0, 15.0); //Convert the voltage to a UV intensity level
+   	 
+    	Serial.print(uvLevel);              	Serial.print(F(","));
+    	Serial.print(uvIntensity);          	Serial.print(F(","));
+     
+      
+    	//RGB OPERATIONS
+    	//////////////////////////////////////////////////////
+    	// Read sensor values (16 bit integers)
+    	unsigned int red = RGB_sensor.readRed();
+    	unsigned int green = RGB_sensor.readGreen();
+    	unsigned int blue = RGB_sensor.readBlue();
+   	 
+    	// Print out readings, change HEX to DEC if you prefer decimal output
+    	Serial.print(red,DEC);              	Serial.print(F(","));
+    	Serial.print(green,DEC);            	Serial.print(F(","));
+    	Serial.print(blue,DEC);             	Serial.print(F(","));
+ 	 
+ 	 
+    	//LUMINOSITY OPERATIONS
+    	//////////////////////////////////////////////////////
+    	//Once integration is complete, we'll retrieve the data.
+ 
+    	unsigned int data0, data1;//Retrieve the data from the device:
+   	 
+    	if (light.getData(data0,data1))
+    	{
      	 
-      	if (light.getData(data0,data1))
-      	{
-       	 
-        	//To calculate lux, pass all your settings and readings
-        	//to the getLux() function.
+      	//To calculate lux, pass all your settings and readings
+      	//to the getLux() function.
+   	 
+      	double lux;	//Resulting lux value
+      	boolean good;  //True if neither sensor is saturated
      	 
-        	double lux;	//Resulting lux value
-        	boolean good;  //True if neither sensor is saturated
-       	 
-        	good = light.getLux(gain,ms,data0,data1,lux); //Perform lux calculation:
-       	 
-        	// Print out the results:
-        	Serial.print(data0);              	Serial.print(F(","));
-        	Serial.print(data1);              	Serial.print(F(","));
-        	Serial.print(lux);                	Serial.print(F(","));
-       	 
-      	}
-      	else
-      	{
-        	//getData() returned false because of an I2C error, inform the user.
-        	byte error = light.getError();
-        	printError(error);
-      	}
+      	good = light.getLux(gain,ms,data0,data1,lux); //Perform lux calculation:
      	 
-  
-      	//BAROMETER OPERATIONS
-      	/////////////////////////////////////////////////////////
-      	char status;
-      	double T,P,p0,a;
+      	// Print out the results:
+      	Serial.print(data0);              	Serial.print(F(","));
+      	Serial.print(data1);              	Serial.print(F(","));
+      	Serial.print(lux);                	Serial.print(F(","));
      	 
-    	 
-      	status = pressure.startTemperature();
+    	}
+    	else
+    	{
+      	//getData() returned false because of an I2C error, inform the user.
+      	byte error = light.getError();
+      	printError(error);
+    	}
+   	 
+
+    	//BAROMETER OPERATIONS
+    	/////////////////////////////////////////////////////////
+    	char status;
+    	double T,P,p0,a;
+   	 
+  	 
+    	status = pressure.startTemperature();
+    	if (status != 0)
+    	{
+      	// Wait for the measurement to complete:
+      	delay(status);
+ 	 
+      	// Retrieve the completed temperature measurement:
+      	// Note that the measurement is stored in the variable T.
+      	// Function returns 1 if successful, 0 if failure.
+ 	 
+      	status = pressure.getTemperature(T);
       	if (status != 0)
       	{
-        	// Wait for the measurement to complete:
-        	delay(status);
-   	 
-        	// Retrieve the completed temperature measurement:
-        	// Note that the measurement is stored in the variable T.
-        	// Function returns 1 if successful, 0 if failure.
-   	 
-        	status = pressure.getTemperature(T);
+       	 
+        	// Start a pressure measurement:
+        	// The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
+        	// If request is successful, the number of ms to wait is returned.
+        	// If request is unsuccessful, 0 is returned.
+ 	 
+        	status = pressure.startPressure(3);
         	if (status != 0)
         	{
-         	 
-          	// Start a pressure measurement:
-          	// The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
-          	// If request is successful, the number of ms to wait is returned.
-          	// If request is unsuccessful, 0 is returned.
-   	 
-          	status = pressure.startPressure(3);
+          	// Wait for the measurement to complete:
+          	delay(status);
+ 	 
+          	// Retrieve the completed pressure measurement:
+          	// Note that the measurement is stored in the variable P.
+          	// Note also that the function requires the previous temperature measurement (T).
+          	// (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
+          	// Function returns 1 if successful, 0 if failure.
+ 	 
+          	status = pressure.getPressure(P,T);
           	if (status != 0)
           	{
-            	// Wait for the measurement to complete:
-            	delay(status);
-   	 
-            	// Retrieve the completed pressure measurement:
-            	// Note that the measurement is stored in the variable P.
-            	// Note also that the function requires the previous temperature measurement (T).
-            	// (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
-            	// Function returns 1 if successful, 0 if failure.
-   	 
-            	status = pressure.getPressure(P,T);
-            	if (status != 0)
-            	{
-   	 
-              	// The pressure sensor returns abolute pressure, which varies with altitude.
-              	// To remove the effects of altitude, use the sealevel function and your current altitude.
-              	// This number is commonly used in weather reports.
-              	// Parameters: P = absolute pressure in mb, ALTITUDE = current altitude in m.
-              	// Result: p0 = sea-level compensated pressure in mb
-   	 
-              	p0 = pressure.sealevel(P,ALTITUDE); // we're at 1655 meters (Boulder, CO)
-          	 
-                     	// On the other hand, if you want to determine your altitude from the pressure reading,
-              	// use the altitude function along with a baseline pressure (sea-level or other).
-              	// Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
-              	// Result: a = altitude in m.
-   	 
-              	a = pressure.altitude(P,p0);
-            	}
-            	else Serial.println("error retrieving pressure measurement\n");
+ 	 
+            	// The pressure sensor returns abolute pressure, which varies with altitude.
+            	// To remove the effects of altitude, use the sealevel function and your current altitude.
+            	// This number is commonly used in weather reports.
+            	// Parameters: P = absolute pressure in mb, ALTITUDE = current altitude in m.
+            	// Result: p0 = sea-level compensated pressure in mb
+ 	 
+            	p0 = pressure.sealevel(P,ALTITUDE); // we're at 1655 meters (Boulder, CO)
+        	 
+                   	// On the other hand, if you want to determine your altitude from the pressure reading,
+            	// use the altitude function along with a baseline pressure (sea-level or other).
+            	// Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
+            	// Result: a = altitude in m.
+ 	 
+            	a = pressure.altitude(P,p0);
           	}
-          	else Serial.println("error starting pressure measurement\n");
+          	else Serial.println("error retrieving pressure measurement\n");
         	}
-        	else Serial.println("error with baro");
+        	else Serial.println("error starting pressure measurement\n");
       	}
-      	else Serial.println("error with baro\n");
-   	 
-      	Serial.print(T,2);                  	Serial.print(F(","));
-      	Serial.print(P,2);                  	Serial.print(F(","));
-      	Serial.print(p0,2);                 	Serial.print(F(","));
-      	
-           	 
-  
-      	//GPS OPERATIONS
-      	//////////////////////////////////////////////////////
-        if (! usingInterrupt) {
-          char c = GPS.read();
-        }
+      	else Serial.println("error with baro");
+    	}
+    	else Serial.println("error with baro\n");
+
+      // Check the Temp, if it's >= 0 indicate and turn on the heater
+      if(T <= 0){LD2 = HIGH; heater = HIGH}
+      if(T > 0){LD2 = HIGH; heater = HIGH}
+ 	    
+    	Serial.print(T,2);                  	Serial.print(F(","));
+    	Serial.print(P,2);                  	Serial.print(F(","));
+    	Serial.print(p0,2);                 	Serial.print(F(","));
+    	
+         	 
+
+    	//GPS OPERATIONS
+    	//////////////////////////////////////////////////////
+      if (! usingInterrupt) {
+        char c = GPS.read();
+      }
+      
+      if (GPS.newNMEAreceived()) {
+        if (!GPS.parse(GPS.lastNMEA()))
+          return;
+      }
+       
+      Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
+      Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
+      Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
+      Serial.print(GPS.milliseconds);    Serial.print(F(","));
+      Serial.print(GPS.day, DEC);        Serial.print(F("/"));
+      Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
+      Serial.print(GPS.year, DEC);       Serial.print(F(","));
+      Serial.print((int)GPS.fix);        Serial.print(F(","));
+      Serial.print((int)GPS.fixquality); Serial.print(F(","));
+      //If no GPS fix print commas
+      if(!GPS.fix) {
+        LD1 = LOW;
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+      }
+      if (GPS.fix) {
+        LD1 = HIGH;
+        Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
+        Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
+        Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
+        Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
         
-        if (GPS.newNMEAreceived()) {
-          if (!GPS.parse(GPS.lastNMEA()))
-            return;
-        }
-         
-        Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
-        Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
-        Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
-        Serial.print(GPS.milliseconds);    Serial.print(F(","));
-        Serial.print(GPS.day, DEC);        Serial.print(F("/"));
-        Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
-        Serial.print(GPS.year, DEC);       Serial.print(F(","));
-        Serial.print((int)GPS.fix);        Serial.print(F(","));
-        Serial.print((int)GPS.fixquality); Serial.print(F(","));
-        //If no GPS fix print commas
-        if(!GPS.fix) {
-          LD0 = HIGH;
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-                                           Serial.print(F(","));
-        }
-        if (GPS.fix) {
-          LD0 = LOW;
-          Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
-          Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
-          Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
-          Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
-          
-          Serial.print(GPS.speed);                                 Serial.print(F(","));
-          Serial.print(GPS.angle);                                 Serial.print(F(","));
-          Serial.print(GPS.altitude);                              Serial.print(F(","));
-          Serial.print((int)GPS.satellites);                       Serial.print(F(","));
-        }
+        Serial.print(GPS.speed);                                 Serial.print(F(","));
+        Serial.print(GPS.angle);                                 Serial.print(F(","));
+        Serial.print(GPS.altitude);                              Serial.print(F(","));
+        Serial.print((int)GPS.satellites);                       Serial.print(F(","));
+      }
   
-      	Serial.println(F("")); //print new line
-    	  break;
+    	Serial.println(F("")); //print new line
+
+      LD0 = LOW; // finished one itteration of data logging
+  	  break;
    }
 }
 /////////////////////////////////////////////////////////
