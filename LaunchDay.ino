@@ -12,17 +12,17 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc1
+ * Version 1.0rc2
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
- *  ChronoDot code
- *  Get sensors to play nice
- *  LED outputs
- *    Sensor errors
- *  Finish header comments
- *    explain output file
- *  Wiring Guide
+ *  Change the IMU settings to what we want.
+ *  Get sensors to play nice.
+ *  LED outputs.
+ *    Sensor errors.
+ *  Finish header comments.
+ *    explain output file.
+ *  Wiring Guide.
  * 
  ***************************************************/
 
@@ -144,6 +144,8 @@ void setup(void){
   G.getSensor(&sensor);
   M.getSensor(&sensor);
   B.getSensor(&sensor);
+
+  M.enableAutoRange(true); // have mag use auto range
 
   
   //UV SETUP
@@ -423,8 +425,8 @@ void loop() {
     	else Serial.println("error with baro\n");
 
       // Check the Temp, if it's >= 0 indicate and turn on the heater
-      if(T <= 0){LD2 = HIGH; heater = HIGH}
-      if(T > 0){LD2 = HIGH; heater = HIGH}
+      if(T <= 0){LD2 = HIGH; heater = HIGH;}
+      if(T > 0){LD2 = HIGH; heater = HIGH;}
  	    
     	Serial.print(T,2);                  	Serial.print(F(","));
     	Serial.print(P,2);                  	Serial.print(F(","));
