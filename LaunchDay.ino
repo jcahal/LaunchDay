@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc2
+ * Version 1.0rc4
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -53,12 +53,13 @@ Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       B   = Adafruit_BMP085_Unified(18001);
 Adafruit_L3GD20_Unified   	  G   = Adafruit_L3GD20_Unified(20);
 
+/*
 //UV Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions
 int UVOUT = A0; //Output from the sensor
 int REF_3V3 = A1; //3.3V power on the Arduino board
-
+*/
 
 
 //RGB Definitions
@@ -82,7 +83,7 @@ void useInterrupt(boolean);
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
-SoftwareSerial mySerial(3, 2); // TX - D1, RX - D2
+SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
 Adafruit_GPS GPS(&mySerial);
 #define GPSECHO  true
 
@@ -93,12 +94,12 @@ int state = 0; //for state machine switch statement
 int t = 0; 	//time keeper (seconds)
 
 //LEDs
-int LD0 = 4; // D2
-int LD1 = 5; // D3
-int LD2 = 6; // D4
-int LD3 = 7; // D5
+int LD0 = 6; // D6
+int LD1 = 7; // D7
+int LD2 = 8; // D8
+int LD3 = 9; // D9
 
-int heater = 8; // D6
+int heater = 10; // D10
 
 
 //Funcions Prototypes
@@ -147,12 +148,12 @@ void setup(void){
 
   M.enableAutoRange(true); // have mag use auto range
 
-  
+  /*
   //UV SETUP
   //////////////////////////////////////////////////////
   pinMode(UVOUT, INPUT);
   pinMode(REF_3V3, INPUT);
-
+*/
 
   //RGB SETUP
   //////////////////////////////////////////////////////
@@ -190,7 +191,7 @@ void setup(void){
 	// Oops, something went wrong, this is usually a connection problem,
 	// see the comments at the top of this sketch for the proper connections.
 
-	Serial.println("BMP180 init fail\n\n");
+	//Serial.println("BMP180 init fail\n\n");
 	while(1); // Pause forever.
   }
  
@@ -215,7 +216,8 @@ void setup(void){
 
   //Output Header
   //////////////////////////////////////////////////////
-  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
+  //Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
+  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
   delay(500);
  
 }
@@ -301,7 +303,7 @@ void loop() {
       	B.getTemperature(&temperature);
       	Serial.print(temperature);        	Serial.print(F(","));
     	}      
-   	 
+   	 /*
     	//UV OPERATIONS
     	//////////////////////////////////////////////////////
     	int uvLevel = averageAnalogRead(UVOUT);
@@ -314,6 +316,7 @@ void loop() {
    	 
     	Serial.print(uvLevel);              	Serial.print(F(","));
     	Serial.print(uvIntensity);          	Serial.print(F(","));
+     */
      
       
     	//RGB OPERATIONS
