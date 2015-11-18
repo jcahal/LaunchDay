@@ -16,11 +16,9 @@
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
- *  GPS code
  *  ChronoDot code
  *  Get sensors to play nice
  *  LED outputs
- *    GPS Fix
  *    Sensor errors
  *  Finish header comments
  *    explain output file
