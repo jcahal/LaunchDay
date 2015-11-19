@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc8
+ * Version 1.0rc9
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -118,7 +118,7 @@ void useInterrupt(boolean v);
 //SETUP
 /////////////////////////////////////////////////////////
 void setup(void){
-  Serial.begin(115200); //begin serial conncetion
+  Serial.begin(4800); //begin serial conncetion
 
   //IMU SETUP
   //////////////////////////////////////////////////////
