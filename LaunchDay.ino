@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc9
+ * Version 1.0rc10
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -42,8 +42,8 @@
 
 #include <SparkFunISL29125.h>  //RGB
 
-#include <Adafruit_GPS.h>      //GPS
-#include <SoftwareSerial.h>    //GPS
+//#include <Adafruit_GPS.h>      //GPS
+//#include <SoftwareSerial.h>    //GPS
 
 //IMU Definitions
 /////////////////////////////////////////////////////////
@@ -83,9 +83,9 @@ void useInterrupt(boolean);
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
-SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
-Adafruit_GPS GPS(&mySerial);
-#define GPSECHO  true
+//SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
+//Adafruit_GPS GPS(&mySerial);
+//#define GPSECHO  true
 
 
 //Phoenix College Acsend Team variables
@@ -112,13 +112,13 @@ int averageAnalogRead(int pinToRead);
 void printError(byte error);
 
 // void useInterrupt(boolean v) - Used by the GPS
-void useInterrupt(boolean v);
+//void useInterrupt(boolean v);
 
 
 //SETUP
 /////////////////////////////////////////////////////////
 void setup(void){
-  Serial.begin(4800); //begin serial conncetion
+  Serial.begin(115200); //begin serial conncetion
 
   //IMU SETUP
   //////////////////////////////////////////////////////
@@ -203,11 +203,11 @@ void setup(void){
 
   //GPS SETUP
   //////////////////////////////////////////////////////
-  GPS.begin(9600);
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
-  GPS.sendCommand(PGCMD_ANTENNA);
-  useInterrupt(true);
+  //GPS.begin(9600);
+  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  //GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
+  //GPS.sendCommand(PGCMD_ANTENNA);
+  //useInterrupt(true);
 
   //Phoenix College Acsend Team SETUP
   //////////////////////////////////////////////////////
@@ -235,16 +235,16 @@ void setup(void){
 // Adafruit put this code here in their GPS parsing example. Im not going to argue with them. ;)
 
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
-SIGNAL(TIMER0_COMPA_vect) {
-  char c = GPS.read();
+//SIGNAL(TIMER0_COMPA_vect) {
+  //char c = GPS.read();
   // if you want to debug, this is a good time to do it!
-#ifdef UDR0
-  if (GPSECHO)
-    if (c) UDR0 = c;  
+//#ifdef UDR0
+  //if (GPSECHO)
+    //if (c) UDR0 = c;  
     // writing direct to UDR0 is much much faster than Serial.print 
     // but only one character can be written at a time. 
-#endif
-}
+//#endif
+//}
 
 /////////////////////////////////////////////////////////
 // END GPS STUFF 
@@ -444,54 +444,54 @@ void loop() {
 
     	//GPS OPERATIONS
     	//////////////////////////////////////////////////////
-      if (! usingInterrupt) {
-        char c = GPS.read();
-      }
+      //if (! usingInterrupt) {
+        //char c = GPS.read();
+      //}
       
-      if (GPS.newNMEAreceived()) {
-        if (!GPS.parse(GPS.lastNMEA()))
-          return;
-      }
+      //if (GPS.newNMEAreceived()) {
+        //if (!GPS.parse(GPS.lastNMEA()))
+          //return;
+      //}
        
-      Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
-      Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
-      Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
-      Serial.print(GPS.milliseconds);    Serial.print(F(","));
-      Serial.print(GPS.day, DEC);        Serial.print(F("/"));
-      Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
-      Serial.print(GPS.year, DEC);       Serial.print(F(","));
-      Serial.print((int)GPS.fix);        Serial.print(F(","));
-      Serial.print((int)GPS.fixquality); Serial.print(F(","));
+      //Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
+      //Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
+      //Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
+      //Serial.print(GPS.milliseconds);    Serial.print(F(","));
+      //Serial.print(GPS.day, DEC);        Serial.print(F("/"));
+      //Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
+      //Serial.print(GPS.year, DEC);       Serial.print(F(","));
+      //Serial.print((int)GPS.fix);        Serial.print(F(","));
+      //Serial.print((int)GPS.fixquality); Serial.print(F(","));
       //If no GPS fix print commas
-      if(GPS.fix == 0) {
-        LD1 = LOW;
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-                                         Serial.print(F(","));
-      }
-      if (GPS.fix == 1) {
-        LD1 = HIGH;
-        Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
-        Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
-        Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
-        Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
+      //if(GPS.fix == 0) {
+        //LD1 = LOW;
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+                                         //Serial.print(F(","));
+      //}
+      //if (GPS.fix == 1) {
+        //LD1 = HIGH;
+        //Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
+        //Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
+        //Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
+        //Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
         
-        Serial.print(GPS.speed);                                 Serial.print(F(","));
-        Serial.print(GPS.angle);                                 Serial.print(F(","));
-        Serial.print(GPS.altitude);                              Serial.print(F(","));
-        Serial.print((int)GPS.satellites);                       Serial.print(F(","));
-      }
+        //Serial.print(GPS.speed);                                 Serial.print(F(","));
+        //Serial.print(GPS.angle);                                 Serial.print(F(","));
+        //Serial.print(GPS.altitude);                              Serial.print(F(","));
+        //Serial.print((int)GPS.satellites);                       Serial.print(F(","));
+      //}
   
     	Serial.println(F("")); //print new line
 
       delay(1000); // delay 1 sec
 
-      LD0 = LOW; // finished one itteration of data logging
+      LD0 = LOW; // finished one iteration of data logging
   	  break;
    }
 }
@@ -570,5 +570,4 @@ void useInterrupt(boolean v) {
     usingInterrupt = false;
   }
 }
-
 
