@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc7
+ * Version 1.0rc8
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
