@@ -12,14 +12,18 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc10
+ * Version 1.0rc11
  * 
  * TODO's: 
- *  Change Luminosity Settings to what we want.
- *  Change the IMU settings to what we want.
- *  Get sensors to play nice.
+ *  Failure incapsulation:
+ *    Get rid of while(1) statements, they loop forever.
+ *    Keep output file integrety by printing "," in place of failed sensor.
+ *  Settings:
+ *    IMU - Acceleration scale, if we can.
+ *    Luminosity - gain and integration rate
+ *    Barometer - Altitude constant
  *  LED outputs.
- *    Sensor errors.
+ *    Sensor errors. - lum, baro, GPS
  *  Finish header comments.
  *    explain output file.
  *  Wiring Guide.
@@ -42,8 +46,8 @@
 
 #include <SparkFunISL29125.h>  //RGB
 
-//#include <Adafruit_GPS.h>      //GPS
-//#include <SoftwareSerial.h>    //GPS
+#include <Adafruit_GPS.h>      //GPS
+#include <SoftwareSerial.h>    //GPS
 
 //IMU Definitions
 /////////////////////////////////////////////////////////
@@ -78,14 +82,13 @@ unsigned int ms;  // Integration ("shutter") time in milliseconds
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
 #define ALTITUDE 1655.0 // Altitude of SparkFun's HQ in Boulder, CO. in meters
-boolean usingInterrupt = false;
-void useInterrupt(boolean);
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
-//SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
-//Adafruit_GPS GPS(&mySerial);
-//#define GPSECHO  true
+SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
+Adafruit_GPS GPS(&mySerial);
+#define GPSECHO  false // we do NOT want to echo raw GPS data to serial
+boolean usingInterrupt = false;
 
 
 //Phoenix College Acsend Team variables
@@ -112,7 +115,7 @@ int averageAnalogRead(int pinToRead);
 void printError(byte error);
 
 // void useInterrupt(boolean v) - Used by the GPS
-//void useInterrupt(boolean v);
+void useInterrupt(boolean);
 
 
 //SETUP
@@ -124,20 +127,20 @@ void setup(void){
   //////////////////////////////////////////////////////
   //Initialise the sensors & check connections
   if(!A.begin()){
-	Serial.println(F("No LSM303 detected."));
-	while(1);
+	  Serial.println(F("No LSM303 detected."));
+    // light LED code
   }
   if(!M.begin()){
-	Serial.println(F("No LSM303 detected."));
-	while(1);
+	  Serial.println(F("No LSM303 detected."));
+    // light LED code
   }
   if(!B.begin()){
-	Serial.print(F("No BMP085 detected."));
-	while(1);
+	  Serial.print(F("No BMP085 detected."));
+    // light LED code
   }
   if(!G.begin()){
-	Serial.print(F("No L3GD20 detected."));
-	while(1);
+	  Serial.print(F("No L3GD20 detected."));
+    // light LED code
   }
   sensor_t sensor;
   // Define sensors
@@ -158,8 +161,10 @@ void setup(void){
   //RGB SETUP
   //////////////////////////////////////////////////////
   // Initialize the ISL29125 with simple configuration so it starts sampling
-  if (RGB_sensor.init())
-  {
+  if (RGB_sensor.init()) {
+    
+  }else {
+    // Light LED code
   }
   
 
@@ -183,31 +188,28 @@ void setup(void){
 
   //BAROMETER SETUP
   /////////////////////////////////////////////////////////
-
   pressure.begin();
   
-  /*// For error checks
+  // For error checks
   // Initialize the sensor (it is important to get calibration values stored on the device).
-  if (pressure.begin())
-	Serial.println("BMP180 init success");
+  if (pressure.begin()) {
+	  // Print nothing upon success
+  }
   else
   {
-	// Oops, something went wrong, this is usually a connection problem,
-	// see the comments at the top of this sketch for the proper connections.
-
-	Serial.println("BMP180 init fail\n\n");
-	while(1); // Pause forever.
+  	Serial.println("BMP180 init fail\n\n");
+  	while(1); // Pause forever.
   }
-  */
+ 
  
 
   //GPS SETUP
   //////////////////////////////////////////////////////
-  //GPS.begin(9600);
-  //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  //GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
-  //GPS.sendCommand(PGCMD_ANTENNA);
-  //useInterrupt(true);
+  GPS.begin(9600);
+  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
+  GPS.sendCommand(PGCMD_ANTENNA);
+  useInterrupt(true);
 
   //Phoenix College Acsend Team SETUP
   //////////////////////////////////////////////////////
@@ -233,19 +235,10 @@ void setup(void){
 // GPS STUFF
 /////////////////////////////////////////////////////////
 // Adafruit put this code here in their GPS parsing example. Im not going to argue with them. ;)
-
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
-//SIGNAL(TIMER0_COMPA_vect) {
-  //char c = GPS.read();
-  // if you want to debug, this is a good time to do it!
-//#ifdef UDR0
-  //if (GPSECHO)
-    //if (c) UDR0 = c;  
-    // writing direct to UDR0 is much much faster than Serial.print 
-    // but only one character can be written at a time. 
-//#endif
-//}
-
+SIGNAL(TIMER0_COMPA_vect) {
+  char c = GPS.read();
+}
 /////////////////////////////////////////////////////////
 // END GPS STUFF 
 
