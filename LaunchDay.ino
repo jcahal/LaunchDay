@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc11
+ * Version 1.0rc12
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -435,57 +435,57 @@ void loop() {
     	
          	 
 
-    	//GPS OPERATIONS
-    	//////////////////////////////////////////////////////
-      //if (! usingInterrupt) {
-        //char c = GPS.read();
-      //}
+      //GPS OPERATIONS
+      //////////////////////////////////////////////////////
+      if (! usingInterrupt) {
+        char c = GPS.read();
+      }
       
-      //if (GPS.newNMEAreceived()) {
-        //if (!GPS.parse(GPS.lastNMEA()))
-          //return;
-      //}
+      if (GPS.newNMEAreceived()) {
+        if (!GPS.parse(GPS.lastNMEA()))
+          return;
+      }
        
-      //Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
-      //Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
-      //Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
-      //Serial.print(GPS.milliseconds);    Serial.print(F(","));
-      //Serial.print(GPS.day, DEC);        Serial.print(F("/"));
-      //Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
-      //Serial.print(GPS.year, DEC);       Serial.print(F(","));
-      //Serial.print((int)GPS.fix);        Serial.print(F(","));
-      //Serial.print((int)GPS.fixquality); Serial.print(F(","));
-      //If no GPS fix print commas
-      //if(GPS.fix == 0) {
-        //LD1 = LOW;
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-                                         //Serial.print(F(","));
-      //}
-      //if (GPS.fix == 1) {
-        //LD1 = HIGH;
-        //Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
-        //Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
-        //Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
-        //Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
+      Serial.print(GPS.hour, DEC);       Serial.print(F(":")); 
+      Serial.print(GPS.minute, DEC);     Serial.print(F(":"));
+      Serial.print(GPS.seconds, DEC);    Serial.print(F("."));
+      Serial.print(GPS.milliseconds);    Serial.print(F(","));
+      Serial.print(GPS.day, DEC);        Serial.print(F("/"));
+      Serial.print(GPS.month, DEC);      Serial.print(F("/20"));
+      Serial.print(GPS.year, DEC);       Serial.print(F(","));
+      Serial.print((int)GPS.fix);        Serial.print(F(","));
+      Serial.print((int)GPS.fixquality); Serial.print(F(","));
+      //if no GPS fix print commas
+      if(GPS.fix == 0) {
+        LD1 = LOW;
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+                                         Serial.print(F(","));
+      }
+      if (GPS.fix == 1) {
+        LD1 = HIGH;
+        Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
+        Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
+        Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
+        Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
         
-        //Serial.print(GPS.speed);                                 Serial.print(F(","));
-        //Serial.print(GPS.angle);                                 Serial.print(F(","));
-        //Serial.print(GPS.altitude);                              Serial.print(F(","));
-        //Serial.print((int)GPS.satellites);                       Serial.print(F(","));
-      //}
+        Serial.print(GPS.speed);                                 Serial.print(F(","));
+        Serial.print(GPS.angle);                                 Serial.print(F(","));
+        Serial.print(GPS.altitude);                              Serial.print(F(","));
+        Serial.print((int)GPS.satellites);                       Serial.print(F(","));
+      }
   
-    	Serial.println(F("")); //print new line
+      Serial.println(F("")); //print new line
 
       delay(1000); // delay 1 sec
 
       LD0 = LOW; // finished one iteration of data logging
-  	  break;
+      break;
    }
 }
 /////////////////////////////////////////////////////////
