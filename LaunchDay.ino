@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc4
+ * Version 1.0rc5
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -483,6 +483,8 @@ void loop() {
       }
   
     	Serial.println(F("")); //print new line
+
+      delay(1000); // delay 1 sec
 
       LD0 = LOW; // finished one itteration of data logging
   	  break;
