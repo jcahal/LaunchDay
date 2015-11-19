@@ -184,7 +184,7 @@ void setup(void){
   //BAROMETER SETUP
   /////////////////////////////////////////////////////////
 
-  pressure.begin()
+  pressure.begin();
   
   /*// For error checks
   // Initialize the sensor (it is important to get calibration values stored on the device).
