@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc6
+ * Version 1.0rc7
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -118,7 +118,7 @@ void useInterrupt(boolean v);
 //SETUP
 /////////////////////////////////////////////////////////
 void setup(void){
-  Serial.begin(9600);
+  Serial.begin(115200); //begin serial conncetion
 
   //IMU SETUP
   //////////////////////////////////////////////////////
@@ -183,6 +183,10 @@ void setup(void){
 
   //BAROMETER SETUP
   /////////////////////////////////////////////////////////
+
+  pressure.begin()
+  
+  /*// For error checks
   // Initialize the sensor (it is important to get calibration values stored on the device).
   if (pressure.begin())
 	Serial.println("BMP180 init success");
@@ -191,9 +195,10 @@ void setup(void){
 	// Oops, something went wrong, this is usually a connection problem,
 	// see the comments at the top of this sketch for the proper connections.
 
-	//Serial.println("BMP180 init fail\n\n");
+	Serial.println("BMP180 init fail\n\n");
 	while(1); // Pause forever.
   }
+  */
  
 
   //GPS SETUP
