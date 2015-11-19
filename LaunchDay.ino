@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc5
+ * Version 1.0rc6
  * 
  * TODO's: 
  *  Change Luminosity Settings to what we want.
@@ -458,7 +458,7 @@ void loop() {
       Serial.print((int)GPS.fix);        Serial.print(F(","));
       Serial.print((int)GPS.fixquality); Serial.print(F(","));
       //If no GPS fix print commas
-      if(!GPS.fix) {
+      if(GPS.fix == 0) {
         LD1 = LOW;
                                          Serial.print(F(","));
                                          Serial.print(F(","));
@@ -469,7 +469,7 @@ void loop() {
                                          Serial.print(F(","));
                                          Serial.print(F(","));
       }
-      if (GPS.fix) {
+      if (GPS.fix == 1) {
         LD1 = HIGH;
         Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
         Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
