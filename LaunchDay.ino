@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0.2
+ * Version 1.0.3
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -95,12 +95,12 @@ int state = 0; //for state machine switch statement
 int t = 0; 	//time keeper (seconds)
 
 //LEDs
-int LD0 = 6; // D6
-int LD1 = 7; // D7
-int LD2 = 8; // D8
-int LD3 = 9; // D9
+int LD0 = 13; // D13
+int LD1 = 12; // D12
+int LD2 = 11; // D11
+int LD3 = 10; // D10
 
-int heater = 10; // D10
+int heater = 9; // D9
 
 
 //Funcions Prototypes
@@ -247,7 +247,7 @@ void loop() {
   switch(state) {
   	case 0:  	//State 00, Waiting State
 
-      LD0 = HIGH; // Indicator LED
+      digitalWrite(LD0, HIGH); // Indicator LED
   
       //Uncomment these 3 lines to setup a 2 min time delay (Untested)
     	if(t <= 120) 
@@ -256,14 +256,14 @@ void loop() {
         
         t++; // keep time 
         
-        LD0 = LOW;
+        digitalWrite(LD0, LOW);
         delay(1000); //delay 1s
 
         t++; // keep time
     	} 
     	else 
     	{
-        LD0 = LOW;
+        digitalWrite(LD0, LOW);
     	  state = state + 1; // Transision to next state
     	}
         
@@ -271,7 +271,7 @@ void loop() {
   
   	case 1:  	//State 01, Data Collection State
 
-      LD0 = HIGH; //Light LD0 to indicate start data loging
+      digitalWrite(LD0, HIGH); //Light LD0 to indicate start data loging
    
     	//IMU OPERATIONS
     	//////////////////////////////////////////////////////
@@ -432,8 +432,16 @@ void loop() {
     	else Serial.println("error with baro\n");
 
       // Check the Temp, if it's >= 0 indicate and turn on the heater
-      if(T <= 0){LD2 = HIGH; heater = HIGH;}
-      if(T > 0){LD2 = HIGH; heater = HIGH;}
+      if(T <= 0)
+      {
+        digitalWrite(LD2, HIGH);
+        digitalWrite(heater, HIGH); // turn on the heat
+      }
+      if(T > 0)
+      {
+        digitalWrite(LD2, LOW);
+        digitalWrite(heater, LOW); // turn off the heat
+      }
  	    
     	Serial.print(T,2);                  	Serial.print(F(","));
     	Serial.print(P,2);                  	Serial.print(F(","));
@@ -463,7 +471,7 @@ void loop() {
       Serial.print((int)GPS.fixquality); Serial.print(F(","));
       //if no GPS fix print commas
       if(!GPS.fix) {
-        LD1 = LOW;
+        digitalWrite(LD1, LOW);
                                          Serial.print(F(","));
                                          Serial.print(F(","));
                                          Serial.print(F(","));
@@ -474,7 +482,7 @@ void loop() {
                                          Serial.print(F(","));
       }
       if (GPS.fix) {
-        LD1 = HIGH;
+        digitalWrite(LD1, HIGH);
         Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
         Serial.print(GPS.longitude, 4); Serial.print(GPS.lon);   Serial.print(F(","));
         Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
@@ -488,7 +496,7 @@ void loop() {
   
       Serial.println(F("")); //print new line
 
-      LD0 = LOW; // finished one iteration of data logging
+      digitalWrite(LD0, LOW); // finished one iteration of data logging
 
       delay(1000); // delay 1 sec
       break;
@@ -569,4 +577,5 @@ void useInterrupt(boolean v) {
     usingInterrupt = false;
   }
 }
+
 
