@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0
+ * Version 1.0.2
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -246,15 +246,24 @@ void loop() {
   //Launch Day State Machine
   switch(state) {
   	case 0:  	//State 00, Waiting State
+
+      LD0 = HIGH; // Indicator LED
   
       //Uncomment these 3 lines to setup a 2 min time delay (Untested)
     	if(t <= 120) 
     	{ 
     	  delay(1000); //delay 1s
+        
         t++; // keep time 
+        
+        LD0 = LOW;
+        delay(1000); //delay 1s
+
+        t++; // keep time
     	} 
     	else 
     	{
+        LD0 = LOW;
     	  state = state + 1; // Transision to next state
     	}
         
