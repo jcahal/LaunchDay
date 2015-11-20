@@ -248,9 +248,16 @@ void loop() {
   	case 0:  	//State 00, Waiting State
   
       //Uncomment these 3 lines to setup a 2 min time delay (Untested)
-    	if(t >= 120) { state++; } //transision to next state
-    	delay(1000); //delay 1s
-    	t++; //keep time   
+    	if(t <= 120) 
+    	{ 
+    	  delay(1000); //delay 1s
+        t++; // keep time 
+    	} 
+    	else 
+    	{
+    	  state = state + 1; // Transision to next state
+    	}
+        
     	break;
   
   	case 1:  	//State 01, Data Collection State
