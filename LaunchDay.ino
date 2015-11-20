@@ -1,5 +1,5 @@
 /****************************************************
- * Phoenix College Acsend Launch Day Logic Fall 2015
+ * Phoenix College Acsend Launch Day Instructions Fall 2015
  *
  * This file contains the code for collecting data from:
  * 
@@ -12,11 +12,10 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc12
+ * Version 1.0
  * 
  * TODO's: 
  *  Failure incapsulation:
- *    Get rid of while(1) statements, they loop forever.
  *    Keep output file integrety by printing "," in place of failed sensor.
  *  Settings:
  *    IMU - Acceleration scale, if we can.
@@ -57,13 +56,12 @@ Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       B   = Adafruit_BMP085_Unified(18001);
 Adafruit_L3GD20_Unified   	  G   = Adafruit_L3GD20_Unified(20);
 
-/*
+
 //UV Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions
 int UVOUT = A0; //Output from the sensor
 int REF_3V3 = A1; //3.3V power on the Arduino board
-*/
 
 
 //RGB Definitions
@@ -121,7 +119,7 @@ void useInterrupt(boolean);
 //SETUP
 /////////////////////////////////////////////////////////
 void setup(void){
-  Serial.begin(115200); //begin serial conncetion
+  Serial.begin(115200); // begin serial conncetion, determined by recomended baud rate for GPS
 
   //IMU SETUP
   //////////////////////////////////////////////////////
@@ -151,12 +149,12 @@ void setup(void){
 
   M.enableAutoRange(true); // have mag use auto range
 
-  /*
+
   //UV SETUP
   //////////////////////////////////////////////////////
   pinMode(UVOUT, INPUT);
   pinMode(REF_3V3, INPUT);
-*/
+
 
   //RGB SETUP
   //////////////////////////////////////////////////////
@@ -197,10 +195,8 @@ void setup(void){
   }
   else
   {
-  	Serial.println("BMP180 init fail\n\n");
-  	while(1); // Pause forever.
+  	// light LED code
   }
- 
  
 
   //GPS SETUP
@@ -210,6 +206,7 @@ void setup(void){
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
   GPS.sendCommand(PGCMD_ANTENNA);
   useInterrupt(true);
+
 
   //Phoenix College Acsend Team SETUP
   //////////////////////////////////////////////////////
@@ -223,9 +220,8 @@ void setup(void){
 
   //Output Header
   //////////////////////////////////////////////////////
-  //Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
-  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
-  delay(500);
+  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
+  delay(1000);
  
 }
 /////////////////////////////////////////////////////////
@@ -251,16 +247,10 @@ void loop() {
   switch(state) {
   	case 0:  	//State 00, Waiting State
   
-   	  //To setup a 2 min time delay (Untested), comment ou the line below
-      //and uncomment the 3 below that.
-   	  state = 1;
-  
       //Uncomment these 3 lines to setup a 2 min time delay (Untested)
-      /*
     	if(t >= 120) { state++; } //transision to next state
     	delay(1000); //delay 1s
-    	t++; //keep time
-      */    
+    	t++; //keep time   
     	break;
   
   	case 1:  	//State 01, Data Collection State
@@ -301,7 +291,8 @@ void loop() {
       	B.getTemperature(&temperature);
       	Serial.print(temperature);        	Serial.print(F(","));
     	}      
-   	 /*
+
+      
     	//UV OPERATIONS
     	//////////////////////////////////////////////////////
     	int uvLevel = averageAnalogRead(UVOUT);
@@ -314,7 +305,6 @@ void loop() {
    	 
     	Serial.print(uvLevel);              	Serial.print(F(","));
     	Serial.print(uvIntensity);          	Serial.print(F(","));
-     */
      
       
     	//RGB OPERATIONS
@@ -456,7 +446,7 @@ void loop() {
       Serial.print((int)GPS.fix);        Serial.print(F(","));
       Serial.print((int)GPS.fixquality); Serial.print(F(","));
       //if no GPS fix print commas
-      if(GPS.fix == 0) {
+      if(!GPS.fix) {
         LD1 = LOW;
                                          Serial.print(F(","));
                                          Serial.print(F(","));
@@ -467,10 +457,10 @@ void loop() {
                                          Serial.print(F(","));
                                          Serial.print(F(","));
       }
-      if (GPS.fix == 1) {
+      if (GPS.fix) {
         LD1 = HIGH;
         Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
-        Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
+        Serial.print(GPS.longitude, 4); Serial.print(GPS.lon);   Serial.print(F(","));
         Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
         Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
         
@@ -482,9 +472,9 @@ void loop() {
   
       Serial.println(F("")); //print new line
 
-      delay(1000); // delay 1 sec
-
       LD0 = LOW; // finished one iteration of data logging
+
+      delay(1000); // delay 1 sec
       break;
    }
 }
