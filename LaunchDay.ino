@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0.4
+ * Version 1.1.0
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -96,9 +96,6 @@ int t = 0; 	//time keeper (seconds)
 
 //LEDs
 int LD0 = 13; // D13, sysLED
-int LD1 = 12; // D12, T <= 0 
-int LD2 = 11; // D11
-int LD3 = 10; // D10
 
 int heater = 9; // D9
 
@@ -212,9 +209,6 @@ void setup(void){
   //////////////////////////////////////////////////////
   //pinModes
   pinMode(LD0, OUTPUT);
-  pinMode(LD1, OUTPUT);
-  pinMode(LD2, OUTPUT);
-  pinMode(LD3, OUTPUT);
   pinMode(heater, OUTPUT);
     
 
@@ -361,9 +355,6 @@ void loop() {
     	}
     	else
     	{
-      	//getData() returned false because of an I2C error, inform the user.
-      	byte error = light.getError();
-      	printError(error);
     	}
    	 
 
@@ -434,12 +425,10 @@ void loop() {
       // Check the Temp, if it's >= 0 indicate and turn on the heater
       if(T <= 0)
       {
-        digitalWrite(LD1, HIGH);
         digitalWrite(heater, HIGH); // turn on the heat
       }
       if(T > 0)
       {
-        digitalWrite(LD1, LOW);
         digitalWrite(heater, LOW); // turn off the heat
       }
  	    
@@ -521,6 +510,7 @@ int averageAnalogRead(int pinToRead)
   return(runningValue);  
 }
 
+
 //The Arduino Map function but for floats
 //From: http://forum.arduino.cc/index.php?topic=3922.0
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
@@ -528,38 +518,6 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-
-//void printError(byte error) - Used by the Luminosity sensor to display errors
-//////////////////////////////////////////////////////
-void printError(byte error)
-  // If there's an I2C error, this function will
-  // print out an explanation.
-{
-  Serial.print("I2C error: ");
-  Serial.print(error,DEC);
-  Serial.print(", ");
- 
-  switch(error)
-  {
-	case 0:
-  	Serial.println("success");
-  	break;
-	case 1:
-  	Serial.println("data too long for transmit buffer");
-  	break;
-	case 2:
-  	Serial.println("received NACK on address (disconnected?)");
-  	break;
-	case 3:
-  	Serial.println("received NACK on data");
-  	break;
-	case 4:
-  	Serial.println("other error");
-  	break;
-	default:
-  	Serial.println("unknown error");
-  }
-}
 
 // void useInterrupt(boolean v) - Used by the GPS
 void useInterrupt(boolean v) {
