@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.1.0
+ * Version 1.2.0
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -241,26 +241,7 @@ void loop() {
   switch(state) {
   	case 0:  	//State 00, Waiting State
 
-      digitalWrite(LD0, HIGH); // Indicator LED
-  
-      //Uncomment these 3 lines to setup a 2 min time delay (Untested)
-    	if(t <= 120) 
-    	{ 
-    	  delay(1000); //delay 1s
-        
-        t++; // keep time 
-        
-        digitalWrite(LD0, LOW);
-        delay(1000); //delay 1s
-
-        t++; // keep time
-    	} 
-    	else 
-    	{
-        digitalWrite(LD0, LOW);
-    	  state = state + 1; // Transision to next state
-    	}
-        
+      state++;
     	break;
   
   	case 1:  	//State 01, Data Collection State
