@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.2.0
+ * Version 1.2.1
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -79,7 +79,7 @@ unsigned int ms;  // Integration ("shutter") time in milliseconds
 //Barometer Definitions
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
-#define ALTITUDE 1655.0 // Altitude of SparkFun's HQ in Boulder, CO. in meters
+#define ALTITUDE 337.1088 // Altitude of Phoenix in meters
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
@@ -96,7 +96,6 @@ int t = 0; 	//time keeper (seconds)
 
 //LEDs
 int LD0 = 13; // D13, sysLED
-
 int heater = 9; // D9
 
 
