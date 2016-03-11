@@ -1,5 +1,5 @@
 /****************************************************
- * Phoenix College Acsend Launch Day Logic Fall 2015
+ * Phoenix College Acsend Launch Day Instructions Fall 2015
  *
  * This file contains the code for collecting data from:
  * 
@@ -12,14 +12,17 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.0rc8
+ * Version 1.2.1
  * 
  * TODO's: 
- *  Change Luminosity Settings to what we want.
- *  Change the IMU settings to what we want.
- *  Get sensors to play nice.
+ *  Failure incapsulation:
+ *    Keep output file integrety by printing "," in place of failed sensor.
+ *  Settings:
+ *    IMU - Acceleration scale, if we can.
+ *    Luminosity - gain and integration rate
+ *    Barometer - Altitude constant
  *  LED outputs.
- *    Sensor errors.
+ *    Sensor errors. - lum, baro, GPS
  *  Finish header comments.
  *    explain output file.
  *  Wiring Guide.
@@ -53,13 +56,12 @@ Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       B   = Adafruit_BMP085_Unified(18001);
 Adafruit_L3GD20_Unified   	  G   = Adafruit_L3GD20_Unified(20);
 
-/*
+
 //UV Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions
 int UVOUT = A0; //Output from the sensor
 int REF_3V3 = A1; //3.3V power on the Arduino board
-*/
 
 
 //RGB Definitions
@@ -77,15 +79,14 @@ unsigned int ms;  // Integration ("shutter") time in milliseconds
 //Barometer Definitions
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
-#define ALTITUDE 1655.0 // Altitude of SparkFun's HQ in Boulder, CO. in meters
-boolean usingInterrupt = false;
-void useInterrupt(boolean);
+#define ALTITUDE 337.1088 // Altitude of Phoenix in meters
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
 SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
 Adafruit_GPS GPS(&mySerial);
-#define GPSECHO  true
+#define GPSECHO  false // we do NOT want to echo raw GPS data to serial
+boolean usingInterrupt = false;
 
 
 //Phoenix College Acsend Team variables
@@ -94,12 +95,8 @@ int state = 0; //for state machine switch statement
 int t = 0; 	//time keeper (seconds)
 
 //LEDs
-int LD0 = 6; // D6
-int LD1 = 7; // D7
-int LD2 = 8; // D8
-int LD3 = 9; // D9
-
-int heater = 10; // D10
+int LD0 = 13; // D13, sysLED
+int heater = 9; // D9
 
 
 //Funcions Prototypes
@@ -112,32 +109,32 @@ int averageAnalogRead(int pinToRead);
 void printError(byte error);
 
 // void useInterrupt(boolean v) - Used by the GPS
-void useInterrupt(boolean v);
+void useInterrupt(boolean);
 
 
 //SETUP
 /////////////////////////////////////////////////////////
 void setup(void){
-  Serial.begin(115200); //begin serial conncetion
+  Serial.begin(115200); // begin serial conncetion, determined by recomended baud rate for GPS
 
   //IMU SETUP
   //////////////////////////////////////////////////////
   //Initialise the sensors & check connections
   if(!A.begin()){
-	Serial.println(F("No LSM303 detected."));
-	while(1);
+	  Serial.println(F("No LSM303 detected."));
+    // light LED code
   }
   if(!M.begin()){
-	Serial.println(F("No LSM303 detected."));
-	while(1);
+	  Serial.println(F("No LSM303 detected."));
+    // light LED code
   }
   if(!B.begin()){
-	Serial.print(F("No BMP085 detected."));
-	while(1);
+	  Serial.print(F("No BMP085 detected."));
+    // light LED code
   }
   if(!G.begin()){
-	Serial.print(F("No L3GD20 detected."));
-	while(1);
+	  Serial.print(F("No L3GD20 detected."));
+    // light LED code
   }
   sensor_t sensor;
   // Define sensors
@@ -148,18 +145,20 @@ void setup(void){
 
   M.enableAutoRange(true); // have mag use auto range
 
-  /*
+
   //UV SETUP
   //////////////////////////////////////////////////////
   pinMode(UVOUT, INPUT);
   pinMode(REF_3V3, INPUT);
-*/
+
 
   //RGB SETUP
   //////////////////////////////////////////////////////
   // Initialize the ISL29125 with simple configuration so it starts sampling
-  if (RGB_sensor.init())
-  {
+  if (RGB_sensor.init()) {
+    
+  }else {
+    // Light LED code
   }
   
 
@@ -183,22 +182,17 @@ void setup(void){
 
   //BAROMETER SETUP
   /////////////////////////////////////////////////////////
-
   pressure.begin();
   
-  /*// For error checks
+  // For error checks
   // Initialize the sensor (it is important to get calibration values stored on the device).
-  if (pressure.begin())
-	Serial.println("BMP180 init success");
+  if (pressure.begin()) {
+	  // Print nothing upon success
+  }
   else
   {
-	// Oops, something went wrong, this is usually a connection problem,
-	// see the comments at the top of this sketch for the proper connections.
-
-	Serial.println("BMP180 init fail\n\n");
-	while(1); // Pause forever.
+  	// light LED code
   }
-  */
  
 
   //GPS SETUP
@@ -209,21 +203,18 @@ void setup(void){
   GPS.sendCommand(PGCMD_ANTENNA);
   useInterrupt(true);
 
+
   //Phoenix College Acsend Team SETUP
   //////////////////////////////////////////////////////
   //pinModes
   pinMode(LD0, OUTPUT);
-  pinMode(LD1, OUTPUT);
-  pinMode(LD2, OUTPUT);
-  pinMode(LD3, OUTPUT);
   pinMode(heater, OUTPUT);
     
 
   //Output Header
   //////////////////////////////////////////////////////
-  //Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
-  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
-  delay(500);
+  Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
+  delay(1000);
  
 }
 /////////////////////////////////////////////////////////
@@ -233,19 +224,10 @@ void setup(void){
 // GPS STUFF
 /////////////////////////////////////////////////////////
 // Adafruit put this code here in their GPS parsing example. Im not going to argue with them. ;)
-
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
 SIGNAL(TIMER0_COMPA_vect) {
   char c = GPS.read();
-  // if you want to debug, this is a good time to do it!
-#ifdef UDR0
-  if (GPSECHO)
-    if (c) UDR0 = c;  
-    // writing direct to UDR0 is much much faster than Serial.print 
-    // but only one character can be written at a time. 
-#endif
 }
-
 /////////////////////////////////////////////////////////
 // END GPS STUFF 
 
@@ -257,22 +239,13 @@ void loop() {
   //Launch Day State Machine
   switch(state) {
   	case 0:  	//State 00, Waiting State
-  
-   	  //To setup a 2 min time delay (Untested), comment ou the line below
-      //and uncomment the 3 below that.
-   	  state = 1;
-  
-      //Uncomment these 3 lines to setup a 2 min time delay (Untested)
-      /*
-    	if(t >= 120) { state++; } //transision to next state
-    	delay(1000); //delay 1s
-    	t++; //keep time
-      */    
+
+      state++;
     	break;
   
   	case 1:  	//State 01, Data Collection State
 
-      LD0 = HIGH; //Light LD0 to indicate start data loging
+      digitalWrite(LD0, HIGH); //Light LD0 to indicate start data loging
    
     	//IMU OPERATIONS
     	//////////////////////////////////////////////////////
@@ -308,7 +281,8 @@ void loop() {
       	B.getTemperature(&temperature);
       	Serial.print(temperature);        	Serial.print(F(","));
     	}      
-   	 /*
+
+      
     	//UV OPERATIONS
     	//////////////////////////////////////////////////////
     	int uvLevel = averageAnalogRead(UVOUT);
@@ -321,7 +295,6 @@ void loop() {
    	 
     	Serial.print(uvLevel);              	Serial.print(F(","));
     	Serial.print(uvIntensity);          	Serial.print(F(","));
-     */
      
       
     	//RGB OPERATIONS
@@ -362,9 +335,6 @@ void loop() {
     	}
     	else
     	{
-      	//getData() returned false because of an I2C error, inform the user.
-      	byte error = light.getError();
-      	printError(error);
     	}
    	 
 
@@ -433,8 +403,14 @@ void loop() {
     	else Serial.println("error with baro\n");
 
       // Check the Temp, if it's >= 0 indicate and turn on the heater
-      if(T <= 0){LD2 = HIGH; heater = HIGH;}
-      if(T > 0){LD2 = HIGH; heater = HIGH;}
+      if(T <= 0)
+      {
+        digitalWrite(heater, HIGH); // turn on the heat
+      }
+      if(T > 0)
+      {
+        digitalWrite(heater, LOW); // turn off the heat
+      }
  	    
     	Serial.print(T,2);                  	Serial.print(F(","));
     	Serial.print(P,2);                  	Serial.print(F(","));
@@ -442,8 +418,8 @@ void loop() {
     	
          	 
 
-    	//GPS OPERATIONS
-    	//////////////////////////////////////////////////////
+      //GPS OPERATIONS
+      //////////////////////////////////////////////////////
       if (! usingInterrupt) {
         char c = GPS.read();
       }
@@ -462,9 +438,8 @@ void loop() {
       Serial.print(GPS.year, DEC);       Serial.print(F(","));
       Serial.print((int)GPS.fix);        Serial.print(F(","));
       Serial.print((int)GPS.fixquality); Serial.print(F(","));
-      //If no GPS fix print commas
-      if(GPS.fix == 0) {
-        LD1 = LOW;
+      //if no GPS fix print commas
+      if(!GPS.fix) {
                                          Serial.print(F(","));
                                          Serial.print(F(","));
                                          Serial.print(F(","));
@@ -474,10 +449,9 @@ void loop() {
                                          Serial.print(F(","));
                                          Serial.print(F(","));
       }
-      if (GPS.fix == 1) {
-        LD1 = HIGH;
+      if (GPS.fix) {
         Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);    Serial.print(F(",")); 
-        Serial.print(GPS.longitude, 4); Serial.println(GPS.lon); Serial.print(F(","));
+        Serial.print(GPS.longitude, 4); Serial.print(GPS.lon);   Serial.print(F(","));
         Serial.print(GPS.latitudeDegrees, 4);                    Serial.print(F(","));
         Serial.print(GPS.longitudeDegrees, 4);                   Serial.print(F(","));
         
@@ -487,12 +461,12 @@ void loop() {
         Serial.print((int)GPS.satellites);                       Serial.print(F(","));
       }
   
-    	Serial.println(F("")); //print new line
+      Serial.println(F("")); //print new line
+
+      digitalWrite(LD0, LOW); // finished one iteration of data logging
 
       delay(1000); // delay 1 sec
-
-      LD0 = LOW; // finished one itteration of data logging
-  	  break;
+      break;
    }
 }
 /////////////////////////////////////////////////////////
@@ -516,6 +490,7 @@ int averageAnalogRead(int pinToRead)
   return(runningValue);  
 }
 
+
 //The Arduino Map function but for floats
 //From: http://forum.arduino.cc/index.php?topic=3922.0
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
@@ -523,38 +498,6 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-
-//void printError(byte error) - Used by the Luminosity sensor to display errors
-//////////////////////////////////////////////////////
-void printError(byte error)
-  // If there's an I2C error, this function will
-  // print out an explanation.
-{
-  Serial.print("I2C error: ");
-  Serial.print(error,DEC);
-  Serial.print(", ");
- 
-  switch(error)
-  {
-	case 0:
-  	Serial.println("success");
-  	break;
-	case 1:
-  	Serial.println("data too long for transmit buffer");
-  	break;
-	case 2:
-  	Serial.println("received NACK on address (disconnected?)");
-  	break;
-	case 3:
-  	Serial.println("received NACK on data");
-  	break;
-	case 4:
-  	Serial.println("other error");
-  	break;
-	default:
-  	Serial.println("unknown error");
-  }
-}
 
 // void useInterrupt(boolean v) - Used by the GPS
 void useInterrupt(boolean v) {
@@ -570,5 +513,3 @@ void useInterrupt(boolean v) {
     usingInterrupt = false;
   }
 }
-
-
