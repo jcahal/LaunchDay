@@ -1,5 +1,5 @@
 /****************************************************
- * Phoenix College Acsend Launch Day Instructions Fall 2015
+ * Phoenix College Acsend Launch Day Instructions Spring 2016
  *
  * This file contains the code for collecting data from:
  * 
@@ -12,7 +12,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.2.1
+ * Version 1.2.2
  * 
  * TODO's: 
  *  Failure incapsulation:
@@ -69,6 +69,7 @@
 Adafruit_LSM303_Accel_Unified A = Adafruit_LSM303_Accel_Unified(30301);
 Adafruit_LSM303_Mag_Unified   M = Adafruit_LSM303_Mag_Unified(30302);
 Adafruit_BMP085_Unified       B = Adafruit_BMP085_Unified(18001);
+// Adafruit_L3GD20_Unified    G = Adafruit_L3GD20_Unified(????); // Gyroscope is currently not used in Orientation. Need to find code to integrate Gyroscope into AHRS system.
 
 // Create simple AHRS algorithm using the above sensors.
 Adafruit_Simple_AHRS          ahrs(&A, &M);
@@ -109,7 +110,7 @@ Adafruit_GPS GPS(&mySerial);
 #define GPSECHO  false // we do NOT want to echo raw GPS data to serial
 boolean usingInterrupt = false;
 
-/*
+
 //Phoenix College Acsend Team variables
 ////////////////////////////////////////////////////////
 int state = 0; //for state machine switch statement
@@ -128,7 +129,7 @@ int averageAnalogRead(int pinToRead);
 
 // void printError(byte error) - Used by the Luminosity sensor to display errors
 void printError(byte error);
-*/
+
 // void useInterrupt(boolean v) - Used by the GPS
 void useInterrupt(boolean);
 
@@ -157,7 +158,8 @@ void setup(void){
   if(!G.begin()){
     Serial.print(F("No L3GD20 detected."));
     // light LED code
-  }*/
+    */
+  }
   sensor_t sensor;
   // Define sensors
   A.getSensor(&sensor);
@@ -215,7 +217,7 @@ void setup(void){
   {
     // light LED code
   }
- */
+*/
 
   //GPS SETUP
   //////////////////////////////////////////////////////
@@ -223,7 +225,7 @@ void setup(void){
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
   GPS.sendCommand(PGCMD_ANTENNA);
-  //useInterrupt(true);??????????????????????????????????????????????????????????????????????????
+  //useInterrupt(true); // Commented out because it may be messing up the allignment integrity
 
 
   //Phoenix College Acsend Team SETUP
@@ -236,7 +238,7 @@ void setup(void){
   //Output Header
   //////////////////////////////////////////////////////
   //Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));//
-  Serial.println(F("roll,pitch,heading,bmpPressure,bmpTemp,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
+  Serial.println(F("roll,pitch,heading,IMUPressure,IMUTemp,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
   delay(1000);
  
 }
@@ -278,9 +280,9 @@ void loop() {
       sensors_event_t M_event;
       sensors_event_t G_event;
       sensors_event_t B_event;
-      */                            //sensor event data
+      */                            //sensor event data - raw IMU data
       
-      sensors_vec_t   orientation;  //sensor vector data - orientation
+      sensors_vec_t   orientation;  //sensor vector data - calculated IMU orientation
       sensors_event_t B_event;      //sensor event BMP data
 
       float temperature;            //Ambient temperature
@@ -305,6 +307,7 @@ void loop() {
       //Retrieve IMU sensors orientation data
       if (ahrs.getOrientation(&orientation))
 
+      //Display Sensor Information: Orientation (Roll, Pitch, Heading)
       /* 'orientation' should have valid .roll and .pitch fields */
       Serial.print(orientation.roll);     Serial.print(F(","));
       Serial.print(orientation.pitch);    Serial.print(F(","));
