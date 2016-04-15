@@ -14,7 +14,7 @@
  * 
  * Authors: Phoenix College Acsend Team 2015 - 2016
  * 
- * Version 1.3.0.s
+ * Version 1.4.0.s
  * 
  * TODO's: 
  *  Test altDetect
@@ -28,27 +28,24 @@
 /////////////////////////////////////////////////////////
 //Includes, (Up to date libraries folder can be downloaded at: https://github.com/PC-Ascend-Team/libraries)
 #include <Wire.h>                //IMU, Borometer, RB & Motor Driver Comm.
+#include <SoftwareSerial.h>      //GPS
+#include <EEPROM.h>              // sets the state
 
 #include <Adafruit_Sensor.h>   //General Adafruit Sensor Library
 
 #include <Adafruit_10DOF.h>    //IMU
 #include <Adafruit_LSM303_U.h> //IMU
-#include <Adafruit_L3GD20_U.h> //IMU
-#include <Adafruit_BMP085_U.h> //IMU
 #include <Adafruit_Simple_AHRS.h> //IMU - AHRS conversions
 
 #include <SFE_BMP180.h>        //Barometer
 
 #include <Adafruit_GPS.h>      //GPS
-#include <SoftwareSerial.h>    //GPS
 
 //IMU Definitions
 /////////////////////////////////////////////////////////
 //Assign a unique ID to the sensors
 Adafruit_LSM303_Accel_Unified A   = Adafruit_LSM303_Accel_Unified(30301);
 Adafruit_LSM303_Mag_Unified   M   = Adafruit_LSM303_Mag_Unified(30302);
-Adafruit_BMP085_Unified       B   = Adafruit_BMP085_Unified(18001);
-Adafruit_L3GD20_Unified       G   = Adafruit_L3GD20_Unified(20);
 
 // Create simple AHRS algorithm using the above sensors.
 Adafruit_Simple_AHRS          ahrs(&A, &M);
@@ -59,11 +56,12 @@ float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
 // GAS Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions (Analog input)
-int mq4 = A1,
-    mq6 = A2,
-    mq7 = A3;     //Initialize the Gas Sensor variables
+int dust,
+    mq4,
+    mq6,
+    mq7;     //Initialize the Gas Sensor variables
  
-int mq4_ppm,
+float mq4_ppm,
     mq6_ppm,
     mq7_ppm;      //Initialize the Gas Sensor ppm values
 
@@ -75,33 +73,33 @@ SFE_BMP180 pressure;
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
-SoftwareSerial mySerial(3, 2); // TX - D3, RX - D2
+SoftwareSerial mySerial(3, 2); // TX -> D3, RX -> D2
 Adafruit_GPS GPS(&mySerial);
-#define GPSECHO  false // we do NOT want to echo raw GPS data to serial
+#define GPSECHO  true // we do NOT want to echo raw GPS data to serial
 boolean usingInterrupt = false;
 
 
 //Phoenix College Acsend Team variables
 ////////////////////////////////////////////////////////
+#define EEPROM_ADDR 0
 int state = 0;                               // for state machine switch statement
-int t = 0;                                    // time keeper (seconds)
+int t = 0;                                   // time keeper (seconds)
 String message = "";                         // sent by wire to RockBLOCK
+String roll = "";
+String pitch = "";
+String heading = "";
 int altBreakPoint[5] = {0, 0, 0, 0, 0};      // alts that trigger gas sample
 float gpsAlt[5] = {0.0, 0.0, 0.0, 0.0, 0.0}; // used to average alts 
 int offset = 0;                              // offset for collecting alt data points before averaging
-int abpOffset = 0;                           // for iterating through altBreakPoint
 float oldAlt, alt;                           // used in altDetect()
 boolean falling = false;                     // balloon burst flag
 boolean forOldAlt = true;                    // flag for switching between assigning to oldAlt and alt
 boolean checkAlt = false;                    // flag when oldAlt and alt have been assigned, time to altDetect()
 char sampleCode = '\0';                      // tells the MotorDiver what motor to drive
-boolean sampled = false;                     // flags a sample ahs been completed
+int sampled = 11;                            // from pin 13 from the motor driver
 char rbStatus = false;                       // if RockBLOCK has ran into some error
 int rbTransmissions, rbRecives;              // the number of messages the RB has recived and transmitted
-
-//LEDs
-int LD0 = 13; // D13, sysLED
-int heater = 9; // D9
+int motorPin = 12;                           // to pin 12 on the motor driver
 
 
 //Funcions Prototypes
@@ -116,17 +114,26 @@ int heater = 9; // D9
  // void useInterrupt(boolean v) - Used by the GPS
  void useInterrupt(boolean);
 
- // SIGNAL(TIMER0_COMPA_vect) - Used by the GPS
- SIGNAL(TIMER0_COMPA_vect);
-
  // void altDetect(float oldAlt, float alt, int altBreakPoint[]) detects the apex and fills the breakpoint
-void altDetect(float oldAlt, float alt, int altBreakPoint[]);
+ void altDetect(float oldAlt, float alt, int altBreakPoint[]);
 
  //SETUP
  /////////////////////////////////////////////////////////
- void setup(void){
+void setup(void){
+  Wire.begin(); // begin for Master
   Serial.begin(115200); // begin serial conncetion, determined by recomended baud rate for GPS
 
+  // to test until button available, uncomment the next line within
+  // 10s of "Running State 0: Waiting State" gets printed to Serial
+  // and re-upload. Then wait for "Running State 1: Processing State"
+  // to get printed to Serial and press Arduino reset button.
+  // state machine should then run from state 1.
+  //EEPROM[EEPROM_ADDR] = 0;
+
+  state = EEPROM[EEPROM_ADDR]; // set state to stored state
+  pinMode(motorPin, OUTPUT);
+  digitalWrite(motorPin, LOW);
+  
  //IMU SETUP
  //////////////////////////////////////////////////////
  //Initialise the sensors & check connections
@@ -138,43 +145,29 @@ void altDetect(float oldAlt, float alt, int altBreakPoint[]);
    Serial.println(F("No LSM303 detected."));
     // light LED code
  }
- if(!B.begin()){
-   Serial.print(F("No BMP085 detected."));
-    // light LED code
- }
- if(!G.begin()){
-   Serial.print(F("No L3GD20 detected."));
-    // light LED code
- }
+
  
  sensor_t sensor;
  // Define sensors
  A.getSensor(&sensor);
- G.getSensor(&sensor);
  M.getSensor(&sensor);
- B.getSensor(&sensor);
 
  M.enableAutoRange(true); // have mag use auto range
 
  //BAROMETER SETUP
  /////////////////////////////////////////////////////////
- pressure.begin();
+ /*pressure.begin();
    
- // For error checks
- // Initialize the sensor (it is important to get calibration values stored on the device).
+  //For error checks
+  //Initialize the sensor (it is important to get calibration values stored on the device).
  if (pressure.begin()) {
-   // Print nothing upon success
+    //Print nothing upon success
  }
  else
  {
-   // light LED code
- }
+    //light LED code
+ }*/
 
- //GAS SENSOR SETUP
- //////////////////////////////////////////////////////
- pinMode(1, INPUT);
- pinMode(2, INPUT);
- pinMode(3, INPUT); 
 
  //GPS SETUP
  //////////////////////////////////////////////////////
@@ -187,14 +180,13 @@ void altDetect(float oldAlt, float alt, int altBreakPoint[]);
  //Phoenix College Acsend Team SETUP
  //////////////////////////////////////////////////////
  //pinModes
- pinMode(LD0, OUTPUT);
- pinMode(heater, OUTPUT);
- Wire.begin(); // begin for Master
+ pinMode(LED_BUILTIN, OUTPUT);
+ Serial.println(EEPROM[EEPROM_ADDR]);
    
  //Output Header
  //////////////////////////////////////////////////////
- // Header: roll,pitch,yaw,IMUP,IMUT,IMUA,BMP,BMPT,BMPA,LPG,CH4,CO,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats,rbStat,sCode,Sampled,RunTime
- Serial.println(F("roll,pitch,yaw,IMUP,IMUT,IMUA,BMP,BMPT,BMPA,LPG,CH4,CO,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats,rbStat,sCode,Sampled,RunTime"));
+ // Header: IMU_R,IMU_P,IMU_H,BMP_T,BMP_P,BMP_P0,BMP_A,DUST,MQ4,MQ6,MQ7,HH:MM:SS.ms,DD/MM/YYYY,GPS_F,GPS_FQ,LAT,LON,LAT_D,LON_D,GPS_S,GPS_A,GPS_ALT,GPS_SATS,RB_STAT,RB_XMIT,RB_RCVD,RUN_TIME
+ Serial.println(F("IMU_R,IMU_P,IMU_H,BMP_T,BMP_P,BMP_P0,BMP_A,DUST,MQ4,MQ6,MQ7,HH:MM:SS.ms,DD/MM/YYYY,GPS_F,GPS_FQ,LAT,LON,LAT_D,LON_D,GPS_S,GPS_A,GPS_ALT,GPS_SATS,RB_STAT,RB_XMIT,RB_RCVD,RUN_TIME"));
  delay(1000);
  
 }
@@ -221,11 +213,17 @@ SIGNAL(TIMER0_COMPA_vect) {
   //Launch Day State Machine
   switch(state) {
     case 0:   //State 00, Waiting State
-
-      state++;
+    
+      digitalWrite(LED_BUILTIN, (digitalRead(LED_BUILTIN) == HIGH)? LOW : HIGH);
+      delay(500);
+      if((millis() / 1000) % 1800 == 0) {
+        state = 1;
+        EEPROM[EEPROM_ADDR] = state;
+      }
       break;
   
     case 1:   //State 01, Data Collection State
+     /*
    
        //IMU OPERATIONS
        //////////////////////////////////////////////////////
@@ -235,28 +233,12 @@ SIGNAL(TIMER0_COMPA_vect) {
        //Raw sensor event data - raw IMU data
        sensors_event_t A_event;
        sensors_event_t M_event;
-       sensors_event_t G_event;
-       sensors_event_t B_event;
            
        float temperature; //Ambient temperature
          
        //Retrieve sensor data
        A.getEvent(&A_event);
-       M.getEvent(&M_event);
-       G.getEvent(&G_event);
-         
-       /*
-       //Display Raw Sensor Information: Accel, Mag, Gyro
-       Serial.print(A_event.acceleration.x); Serial.print(F(","));
-       Serial.print(A_event.acceleration.y); Serial.print(F(","));
-       Serial.print(A_event.acceleration.z); Serial.print(F(","));
-       Serial.print(M_event.magnetic.x);     Serial.print(F(","));
-       Serial.print(M_event.magnetic.y);     Serial.print(F(","));
-       Serial.print(M_event.magnetic.z);     Serial.print(F(","));
-       Serial.print(G_event.gyro.x);         Serial.print(F(","));
-       Serial.print(G_event.gyro.y);         Serial.print(F(","));
-       Serial.print(G_event.gyro.z);         Serial.print(F(","));
-      */  
+       M.getEvent(&M_event);  
 
       //IMU - AHRS Orientation data 
       sensors_vec_t   orientation;   //sensor vector data - calculated IMU-AHRS orientation
@@ -265,18 +247,10 @@ SIGNAL(TIMER0_COMPA_vect) {
       if (ahrs.getOrientation(&orientation))
 
       //Display Sensor Information: Orientation (Roll, Pitch, Heading)
-      /* 'orientation' should have valid .roll and .pitch fields */
+      // 'orientation' should have valid .roll and .pitch fields 
       Serial.print(orientation.roll);     Serial.print(F(","));
       Serial.print(orientation.pitch);    Serial.print(F(","));
       Serial.print(orientation.heading);  Serial.print(F(","));
-       
-      //Display Sensor Information: Pressure, Temp, Alt
-      B.getEvent(&B_event);
-      if (B_event.pressure){
-        Serial.print(B_event.pressure);     Serial.print(F(","));
-        B.getTemperature(&temperature);
-        Serial.print(temperature);          Serial.print(F(","));
-      }      
 
       //BAROMETER OPERATIONS
        /////////////////////////////////////////////////////////
@@ -340,36 +314,29 @@ SIGNAL(TIMER0_COMPA_vect) {
          else Serial.println("error with baro");
        }
        else Serial.println("error with baro\n");
-
-       // Check the Temp, if it's >= 0 indicate and turn on the heater
-       if(T <= 0)
-       {
-         digitalWrite(heater, HIGH); // turn on the heat
-       }
-       if(T > 0)
-       {
-         digitalWrite(heater, LOW); // turn off the heat
-       }
        
        Serial.print(T,2);                    Serial.print(F(","));
        Serial.print(P,2);                    Serial.print(F(","));
-       Serial.print(p0,2);                   Serial.print(F(","));       
+       Serial.print(p0,2);                   Serial.print(F(","));
+       Serial.print(a,2);                   Serial.print(F(","));       
 
        //GAS SENSOR OPERATIONS
        //////////////////////////////////////////////////////
+       dust = averageAnalogRead(0);        // dust
        mq4 = averageAnalogRead(1);        // read LPG analog input pin 1
        mq6 = averageAnalogRead(2);        // read CH4 analog input pin 2
        mq7 = averageAnalogRead(3);        // read CO analog input pin 3
 
-       float mq4_ppm = mapfloat(mq4,0,1023,300,10000);    //Convert the voltage to PPM
-       float mq6_ppm = mapfloat(mq6,0,1023,300,10000);    //Convert the voltage to PPM
-       float mq7_ppm = mapfloat(mq7,0,1023,10,1000);      //Convert the voltage to PPM
+       mq4_ppm = mapfloat(mq4,0,1023,300,10000);    //Convert the voltage to PPM
+       mq6_ppm = mapfloat(mq6,0,1023,300,10000);    //Convert the voltage to PPM
+       mq7_ppm = mapfloat(mq7,0,1023,10,1000);      //Convert the voltage to PPM
 
+       Serial.print(dust, DEC);           Serial.print(F(","));
        Serial.print(mq4_ppm, DEC);           Serial.print(F(","));
        Serial.print(mq6_ppm, DEC);           Serial.print(F(","));
        Serial.print(mq7_ppm, DEC);           Serial.print(F(","));
 
-     
+     */
       //GPS OPERATIONS
       //////////////////////////////////////////////////////
       if (! usingInterrupt) {
@@ -413,7 +380,7 @@ SIGNAL(TIMER0_COMPA_vect) {
         Serial.print((int)GPS.satellites);                       Serial.print(F(","));
 
         // Sends RockBLOCK a message to transnsmit every 30s
-        if((millis() / 1000) % 30 == 0) {
+        if((millis() / 1000) % 90 == 0) {
           Wire.beginTransmission(8);
           Wire.write("LAT: ");
           message.remove(0); // clear message
@@ -427,13 +394,36 @@ SIGNAL(TIMER0_COMPA_vect) {
           Wire.write(", ");
           Wire.write("FLIGHT STAGE: ");
           Wire.write((falling)? "DESC, " : "ASC, ");
-          Wire.write("AS STAGE: ");
-          Wire.write(sampleCode);
-          Wire.write(", ");
-          Wire.write("AS STATUS: ");
-          Wire.write((sampled)? "COMPLETE" : "SAMPLING");
           Wire.write('\0');
           Wire.endTransmission(); 
+        }
+
+        if(!falling) {
+          oldAlt = GPS.altitude;
+          Serial.println();
+          Serial.print("oldAlt: ");
+          Serial.println(oldAlt);
+          delay(2000);
+          alt = GPS.altitude;
+          Serial.print("alt: ");
+          Serial.println(alt);
+          altDetect(oldAlt, alt, altBreakPoint); 
+        } else {
+          // offset = 0 if falling
+          Serial.println();
+          Serial.println("Alt Breakpoints Found: ");
+          Serial.print("[ ");
+          for(int i = 0; i < 5; i++) {
+            Serial.print(altBreakPoint[i]);
+            Serial.print(", ");
+          }
+          Serial.println(" ]");
+          if(average < altBreakPoint[offset]) {
+            digitalWrite(motorPin, HIGH);
+            delay(1000);
+            digitalWrite(motorPin, LOW);
+            offset++;
+          }
         }
     
         /*
@@ -444,7 +434,7 @@ SIGNAL(TIMER0_COMPA_vect) {
          * in oldAlt. The process repeats and stores the average into alt, then checks if 
          * falling.
          */
-        if((millis() / 1000) % 2) {
+        /*if((millis() / 1000) % 2) {
           if(offset < 5) {
             gpsAlt[offset] = GPS.altitude;
             offset++;
@@ -459,9 +449,13 @@ SIGNAL(TIMER0_COMPA_vect) {
               // get ready to call altDetect
               if(forOldAlt) {
                 oldAlt = average;
+                Serial.print("\nOldAlt: ");
+                Serial.println(average);
                 forOldAlt = false;
               } else { //i.e. for alt
                 alt = average;
+                Serial.print("\nalt: ");
+                Serial.println(average);
                 forOldAlt = true;
                 checkAlt = true;
               }
@@ -472,17 +466,24 @@ SIGNAL(TIMER0_COMPA_vect) {
                 checkAlt = false;
               }
             } else {
-              if(average < altBreakPoint[abpOffset]) {
-                char sampleCode = '0' + abpOffset;
-                Wire.beginTransmission(9);
-                Wire.write(sampleCode);
-                Wire.endTransmission();
-                abpOffset++;
+              // offset = 0 if falling
+              Serial.println("Alt Breakpoints Found: ");
+              Serial.print("[ ");
+              for(int i = 0; i < 5; i++) {
+                Serial.print(altBreakPoint[i]);
+                Serial.print(", ");
+              }
+              Serial.println(" ]");
+              if(average < altBreakPoint[offset]) {
+                digitalWrite(motorPin, HIGH);
+                delay(1000);
+                digitalWrite(motorPin, LOW);
+                offset++;
               }
             }
             
           }
-        }
+        }*/
         
       }
 
@@ -492,22 +493,15 @@ SIGNAL(TIMER0_COMPA_vect) {
         rbTransmissions = Wire.read();
         rbRecives = Wire.read();
       }
-      Wire.requestFrom(9, 2);
-      while(Wire.available()) {
-        sampleCode = Wire.read();
-        sampled = Wire.read();
-      }
     
-      Serial.print(F(rbStatus));            Serial.print(F(","));
-      Serial.print(F(rbTransmissions));     Serial.print(F(","));
-      Serial.print(F(rbRecives));           Serial.print(F(","));
-      Serial.print(F(sampleCode));          Serial.print(F(","));
-      Serial.print(F(sampled));             Serial.print(F(","));
-      Serial.print(F(millis() / 1000));     Serial.print(F(","));
-      Serial.println(F("")); //print new line
+      Serial.print(rbStatus);            Serial.print(F(","));
+      Serial.print(rbTransmissions);     Serial.print(F(","));
+      Serial.print(rbRecives);           Serial.print(F(","));
+      Serial.print(millis() / 1000);     Serial.print(F(","));
+      Serial.println(); //print new line
 
+      digitalWrite(LED_BUILTIN, (digitalRead(LED_BUILTIN) == HIGH)? LOW : HIGH); // toggles LED_BUILTIN on and off
       delay(1000); // delay 1 sec
-      digitalWrite(LD0, (digitalRead(LD0) == HIGH)? LOW : HIGH); // toggles LD0 on and off
       break;
    }
 }
@@ -540,13 +534,6 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// SIGNAL(TIMER0_COMPA_vect) - Used by the GPS.
-// Adafruit put this code here in their GPS parsing example. Im not going to argue with them. ;)
-// Interrupt is called once a millisecond, looks for any new GPS data, and stores it
-SIGNAL(TIMER0_COMPA_vect) {
-  char c = GPS.read();
-}
-
 // void useInterrupt(boolean v) - Used by the GPS
 void useInterrupt(boolean v) {
   if (v) {
@@ -566,10 +553,11 @@ void altDetect (float oldAlt, float alt, int altBreakPoint[]){
   int stepSize = 0;
   int deltaAlt = alt - oldAlt;
   if (deltaAlt < 0) {
-    stepSize = alt/5;
+    stepSize = (alt - 1086)/5;
     for(int y = 0; y < 5; y++){
       altBreakPoint[5 - y] = {alt - ((y + 1) * stepSize)}; // stores break points in decsending order
     }
     falling = true; 
+    offset = 0;
   }  
 }
