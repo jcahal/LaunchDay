@@ -1,17 +1,9 @@
 /****************************************************
- * Phoenix College Acsend Launch Day Instructions Spring 2016
+ * Phoenix College Acsend Launch Day Instructions Fall 2016
  *
  * This file contains the code for collecting data from:
  * 
  * +(IMU) - Adafruit 10-DOF IMU Breakout
- * 
- * +(MQ4) - Sparkfun LPG Sensor - 
- * +(MQ6) - Sparkfun Methane Sensor -
- * +(MQ7) - Sparkfun Carbon Monoxide Sensor -
- * 
- * -(UV) - SparkFun UV Sensor Breakout - ML8511
- * -(RBG) - SparkFun RGB Light Sensor - ISL29125
- * -(Luminosity) - SparkFun Luminosity Sensor Breakout - TSL2561
  * 
  * +(Barometer) - SparkFun Barometric Pressure Sensor Breakout - BMP180
  * +(GPS) - Adafruit Ultimate GPS Breakout - 66 channel w/10 Hz updates - Version 3
@@ -21,9 +13,6 @@
  * Version 1.2.4
  * 
  * TODO's: 
- *  Failure incapsulation:
- *    Keep output file integrety by printing "," in place of failed sensor.
- *  Settings:
  *    IMU - Acceleration scale, if we can.
  *    Luminosity - gain and integration rate
  *    Barometer - Altitude constant
@@ -33,14 +22,10 @@
  *    explain output file.
  *  Wiring Guide.
  *  
- *  Fix Serial Output Allignment for data file.
- *    Fix the GPS interrupt function
  *      Move the New line character outside of the GPS 
  *    (If needed) Add a second serial output line per loop iteration.
  *  Real-time status transmissions (Live Reporting):
  *    GPS
- *    Altitude
- *      (Ascending, Descending, Peak, etc.)
  *  Post Processing
  *    Include time stamp in GPS
  *   
@@ -48,7 +33,7 @@
 
 /////////////////////////////////////////////////////////
 //Includes, (Up to date libraries folder can be downloaded at: https://github.com/PC-Ascend-Team/libraries)
-#include <Wire.h>                //IMU, Luminosity, Borometer, RGB
+#include <Wire.h>                //IMU, Borometer, GPS
 
 #include <Adafruit_Sensor.h>   //General Adafruit Sensor Library
 
@@ -58,10 +43,8 @@
 #include <Adafruit_BMP085_U.h> //IMU
 #include <Adafruit_Simple_AHRS.h> //IMU - AHRS conversions
 
-#include <SFE_BMP180.h>        //Barometer
+//#include <SFE_BMP180.h>        //Barometer
 
-//#include <SparkFunTSL2561.h>   //Luminosity
-//#include <SparkFunISL29125.h>  //RGB
 
 #include <Adafruit_GPS.h>      //GPS
 #include <SoftwareSerial.h>    //GPS
@@ -81,7 +64,7 @@ Adafruit_Simple_AHRS          ahrs(&A, &M);
 // Update this with the correct SLP for accurate altitude measurements
 float seaLevelPressure = SENSORS_PRESSURE_SEALEVELHPA;
 
-// GAS Definitions
+/* // GAS Definitions
 /////////////////////////////////////////////////////////
 //Hardware pin definitions (Analog input)
 int mq4 = A1,
@@ -91,31 +74,14 @@ int mq4 = A1,
 int mq4_ppm,
     mq6_ppm,
     mq7_ppm;      //Initialize the Gas Sensor ppm values
-
-/*
-//UV Definitions
-/////////////////////////////////////////////////////////
-//Hardware pin definitions
-int UVOUT   = A4; //Output from the sensor
-int REF_3V3 = A5; //3.3V power on the Arduino board
- 
- 
-//RGB Definitions
-/////////////////////////////////////////////////////////
-SFE_ISL29125 RGB_sensor; // Declare sensor object
-
-//Luminosty Definitions
-/////////////////////////////////////////////////////////
-SFE_TSL2561 light; // Create an SFE_TSL2561 object, here called "light":
-boolean gain;   // Gain setting, 0 = X1, 1 = X16;
-unsigned int ms;  // Integration ("shutter") time in milliseconds
 */
 
+/*
 //Barometer Definitions
 /////////////////////////////////////////////////////////
 SFE_BMP180 pressure;
 #define ALTITUDE 337.1088 // Altitude of Phoenix in meters
-
+*/
 
 //GPS Definitions
 ////////////////////////////////////////////////////////
@@ -183,7 +149,7 @@ int heater = 9; // D9
  B.getSensor(&sensor);
 
  M.enableAutoRange(true); // have mag use auto range
-
+/*
  //BAROMETER SETUP
  /////////////////////////////////////////////////////////
  pressure.begin();
@@ -197,47 +163,8 @@ int heater = 9; // D9
  {
    // light LED code
  }
-
- //GAS SENSOR SETUP
- //////////////////////////////////////////////////////
- pinMode(1, INPUT);
- pinMode(2, INPUT);
- pinMode(3, INPUT);
-
- /*
- //UV SETUP
- //////////////////////////////////////////////////////
- pinMode(UVOUT, INPUT);
- pinMode(REF_3V3, INPUT);
+ */
  
- 
- //RGB SETUP
- //////////////////////////////////////////////////////
- // Initialize the ISL29125 with simple configuration so it starts sampling
- if (RGB_sensor.init()) {
-    
- }else {
-   // Light LED code
- }
-   
- //LUMINOSITY SETUP
- //////////////////////////////////////////////////////
- light.begin();
-   
- // If gain = false (0), device is set to low gain (1X)
- // If gain = high (1), device is set to high gain (16X)
- gain = 0;
- 
- // If time = 0, integration will be 13.7ms
- // If time = 1, integration will be 101ms
- // If time = 2, integration will be 402ms
- // If time = 3, use manual start / stop to perform your own integration
- unsigned char time = 2;
- 
- light.setTiming(gain,time,ms);
- light.setPowerUp();
- */ 
-
  //GPS SETUP
  //////////////////////////////////////////////////////
  GPS.begin(9600);
@@ -250,8 +177,7 @@ int heater = 9; // D9
  //////////////////////////////////////////////////////
  //pinModes
  pinMode(LD0, OUTPUT);
- pinMode(heater, OUTPUT);
-   
+     
  //Output Header
  //////////////////////////////////////////////////////
  //Serial.println(F("Ax,Ay,Az,Mx,My,Mz,Gx,Gy,Gz,Bp,Bt,UVl,UVi,R,G,B,Vl,Il,LUX,T,P,BAlt,H:M:S.ms,DD/MM/20YY,Fix,FixQ,Lat,Long,LatD,LongD,Speed,Angle,GAlt,Sats"));
@@ -340,7 +266,7 @@ int heater = 9; // D9
         B.getTemperature(&temperature);
         Serial.print(temperature);          Serial.print(F(","));
       }      
-
+/*
       //BAROMETER OPERATIONS
        /////////////////////////////////////////////////////////
        char status;
@@ -417,7 +343,8 @@ int heater = 9; // D9
        Serial.print(T,2);                    Serial.print(F(","));
        Serial.print(P,2);                    Serial.print(F(","));
        Serial.print(p0,2);                   Serial.print(F(","));       
-
+*/
+/*
        //GAS SENSOR OPERATIONS
        //////////////////////////////////////////////////////
        mq4 = averageAnalogRead(1);        // read LPG analog input pin 1
@@ -431,65 +358,8 @@ int heater = 9; // D9
        Serial.print(mq4_ppm, DEC);           Serial.print(F(","));
        Serial.print(mq6_ppm, DEC);           Serial.print(F(","));
        Serial.print(mq7_ppm, DEC);           Serial.print(F(","));
-
-       /*
-       //UV OPERATIONS
-       //////////////////////////////////////////////////////
-       int uvLevel  = averageAnalogRead(UVOUT);
-       int refLevel = averageAnalogRead(REF_3V3);
-      
-       //Use the 3.3V power pin as a reference to get a very accurate output value from sensor
-       float outputVoltage = 3.3 / refLevel * uvLevel;
-      
-       float uvIntensity = mapfloat(outputVoltage, 0.99, 2.8, 0.0, 15.0); //Convert the voltage to a UV intensity level
-      
-       Serial.print(uvLevel);                Serial.print(F(","));
-       Serial.print(uvIntensity);            Serial.print(F(","));
-      
-       
-       //RGB OPERATIONS
-       //////////////////////////////////////////////////////
-       // Read sensor values (16 bit integers)
-       unsigned int red = RGB_sensor.readRed();
-       unsigned int green = RGB_sensor.readGreen();
-       unsigned int blue = RGB_sensor.readBlue();
-      
-       // Print out readings, change HEX to DEC if you prefer decimal output
-       Serial.print(red,DEC);                Serial.print(F(","));
-       Serial.print(green,DEC);              Serial.print(F(","));
-       Serial.print(blue,DEC);               Serial.print(F(","));
-    
-    
-       //LUMINOSITY OPERATIONS
-       //////////////////////////////////////////////////////
-       //Once integration is complete, we'll retrieve the data.
+*/
   
-       unsigned int data0, data1;//Retrieve the data from the device:
-      
-       if (light.getData(data0,data1))
-       {
-        
-         //To calculate lux, pass all your settings and readings
-         //to the getLux() function.
-      
-         double lux; //Resulting lux value
-         boolean good;  //True if neither sensor is saturated
-        
-         good = light.getLux(gain,ms,data0,data1,lux); //Perform lux calculation:
-        
-         // Print out the results:
-         Serial.print(data0);                Serial.print(F(","));
-         Serial.print(data1);                Serial.print(F(","));
-         Serial.print(lux);                  Serial.print(F(","));
-        
-       }
-       else
-       {
-       }
- 
-       */
-
-     
       //GPS OPERATIONS
       //////////////////////////////////////////////////////
       if (! usingInterrupt) {
