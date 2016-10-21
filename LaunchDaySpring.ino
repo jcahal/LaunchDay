@@ -14,7 +14,6 @@
  * 
  * TODO's: 
  *    IMU - Acceleration scale, if we can.
- *    Luminosity - gain and integration rate
  *    Barometer - Altitude constant
  *  LED outputs.
  *    Sensor errors. - lum, baro, GPS
@@ -98,8 +97,6 @@ int t = 0;  //time keeper (seconds)
 
 //LEDs
 int LD0 = 13; // D13, sysLED
-int heater = 9; // D9
-
 
 //Funcions Prototypes
  /////////////////////////////////////////////////////////
